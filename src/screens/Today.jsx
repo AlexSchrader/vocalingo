@@ -1,0 +1,221 @@
+import { useNavigate } from "react-router-dom";
+import { Flame, BookOpen, RotateCcw, Sparkles, Lock, Check } from "lucide-react";
+import { useStore } from "../store/useStore.js";
+import { UNITS } from "../data/index.js";
+import { C, F } from "../theme.js";
+import { VERSION } from "../version.js";
+
+// First playable (item-bearing) lesson — "today's lesson" for the scaffold.
+const TODAY_LESSON = UNITS[0].lessons.find((l) => l.items);
+
+function Step({ icon: Icon, n, title, sub, state }) {
+  // state: "active" | "done" | "locked"
+  const done = state === "done";
+  const locked = state === "locked";
+  const accent = done ? C.matcha : locked ? C.locked : C.ai;
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: 14,
+        borderRadius: 16,
+        background: locked ? C.lockedBg : C.surface,
+        border: `1px solid ${locked ? C.lockedBg : C.line}`,
+        opacity: locked ? 0.7 : 1,
+      }}
+    >
+      <div
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: 12,
+          background: done ? C.matcha : locked ? C.locked : C.aiSoft,
+          color: done || locked ? "#fff" : C.aiDeep,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {done ? <Check size={20} /> : locked ? <Lock size={18} /> : <Icon size={20} />}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, color: accent }}>
+          STEP {n}
+        </div>
+        <div style={{ fontWeight: 600, fontSize: 15 }}>{title}</div>
+        <div style={{ fontSize: 13, color: C.inkSoft }}>{sub}</div>
+      </div>
+    </div>
+  );
+}
+
+export default function Today() {
+  const navigate = useNavigate();
+  const due = useStore((s) => s.dueItems());
+  const reviewsLocked = useStore((s) => s.reviewsLocked());
+  const daily = useStore((s) => s.daily);
+  const streak = useStore((s) => s.streak);
+  const stats = useStore((s) => s.stats);
+  const ja = useStore((s) => s.languages.ja);
+
+  const reviewState = daily.reviewsCleared ? "done" : "active";
+  const lessonState = daily.lessonDone ? "done" : reviewsLocked ? "locked" : "active";
+  const proveState = daily.lessonDone ? "done" : "active";
+
+  const allDone = daily.reviewsCleared && daily.lessonDone;
+  const ctaLabel = !daily.reviewsCleared
+    ? "Start reviews"
+    : !daily.lessonDone
+    ? "Start lesson"
+    : "Review again";
+
+  const start = () => TODAY_LESSON && navigate(`/lesson/${TODAY_LESSON.id}`);
+
+  return (
+    <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16, minHeight: "100%" }}>
+      {/* Header row: greeting + streak pill */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontFamily: F.disp, fontSize: 22, fontWeight: 700 }}>Today</div>
+          <div style={{ fontSize: 13, color: C.inkSoft }}>Clear reviews · lesson · prove it</div>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 12px",
+            borderRadius: 999,
+            background: C.aiSoft,
+            color: C.aiDeep,
+            fontWeight: 700,
+          }}
+        >
+          <Flame size={16} color={C.shu} fill={streak.current > 0 ? C.shu : "none"} />
+          {streak.current} day{streak.current === 1 ? "" : "s"}
+        </div>
+      </div>
+
+      {/* Review-debt banner */}
+      {reviewsLocked && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: 12,
+            borderRadius: 12,
+            background: "#FCEEEA",
+            border: `1px solid ${C.shu}`,
+            color: C.shu,
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+        >
+          <RotateCcw size={18} />
+          {due.length} review{due.length === 1 ? "" : "s"} due — clear them to unlock today's lesson.
+        </div>
+      )}
+
+      {/* The 3-step loop */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <Step
+          icon={RotateCcw}
+          n={1}
+          title="Clear reviews"
+          sub={
+            daily.reviewsCleared
+              ? "Reviews cleared"
+              : due.length > 0
+              ? `${due.length} due today`
+              : "Nothing due — you're clear"
+          }
+          state={reviewState}
+        />
+        <Step
+          icon={BookOpen}
+          n={2}
+          title={`Lesson · ${TODAY_LESSON?.title ?? "—"}`}
+          sub={
+            lessonState === "locked"
+              ? "Locked until reviews are clear"
+              : daily.lessonDone
+              ? "Lesson complete"
+              : TODAY_LESSON?.canDo ?? "Learn new items"
+          }
+          state={lessonState}
+        />
+        <Step
+          icon={Sparkles}
+          n={3}
+          title="Prove it"
+          sub={daily.lessonDone ? "Proved — nice work" : "Speak & build what you learned"}
+          state={proveState}
+        />
+      </div>
+
+      {/* Primary CTA */}
+      <button
+        onClick={start}
+        style={{
+          padding: 18,
+          borderRadius: 16,
+          border: "none",
+          background: allDone ? C.matcha : C.ai,
+          color: "#fff",
+          fontSize: 17,
+          fontWeight: 700,
+          fontFamily: F.body,
+          cursor: "pointer",
+          boxShadow: "0 4px 14px rgba(42,74,123,0.25)",
+        }}
+      >
+        {allDone ? "Done for today — review again" : ctaLabel}
+      </button>
+
+      {/* Quick stats from store */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+        <Stat label="Streak" value={streak.current} />
+        <Stat label="XP" value={stats.xpTotal} />
+        <Stat label="Freezes" value={streak.freezes} />
+      </div>
+      <div style={{ fontSize: 12, color: C.inkSoft, textAlign: "center" }}>
+        {ja.flag} {ja.name} · {ja.level} · {ja.target} goal
+      </div>
+
+      {/* Version watermark */}
+      <div
+        style={{
+          marginTop: "auto",
+          textAlign: "right",
+          fontFamily: F.mono,
+          fontSize: 11,
+          color: C.locked,
+          opacity: 0.6,
+        }}
+      >
+        🇯🇵 {VERSION}
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value }) {
+  return (
+    <div
+      style={{
+        background: C.surface,
+        border: `1px solid ${C.line}`,
+        borderRadius: 14,
+        padding: "12px 8px",
+        textAlign: "center",
+      }}
+    >
+      <div style={{ fontFamily: F.disp, fontSize: 22, fontWeight: 700, color: C.ai }}>{value}</div>
+      <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600 }}>{label}</div>
+    </div>
+  );
+}

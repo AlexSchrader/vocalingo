@@ -1,0 +1,32 @@
+export const UNIT1 = {
+  id: "ja-u1",
+  lang: "ja",
+  title: "はじめまして",
+  order: 1,
+  lessons: [
+    {
+      id: "ja-u1l1",
+      unit: 1,
+      lesson: 1,
+      title: "Greetings",
+      dominantMode: "recall",
+      canDo: "Greet by time of day, say goodbye, say yes/no.",
+      items: [
+        { id: "ja-u1l1-a", type: "kana", front: "あ", reading: "a", meaning: null, example: null },
+        { id: "ja-u1l1-i", type: "kana", front: "い", reading: "i", meaning: null, example: null },
+        { id: "ja-u1l1-u", type: "kana", front: "う", reading: "u", meaning: null, example: null },
+        { id: "ja-u1l1-e", type: "kana", front: "え", reading: "e", meaning: null, example: null },
+        { id: "ja-u1l1-o", type: "kana", front: "お", reading: "o", meaning: null, example: null },
+        { id: "ja-u1l1-ohayou", type: "vocab", front: "おはよう", reading: "ohayō", meaning: "good morning", example: { jp: "おはよう！", en: "Good morning!" } },
+        { id: "ja-u1l1-konnichiwa", type: "vocab", front: "こんにちは", reading: "konnichiwa", meaning: "hello", example: { jp: "こんにちは！", en: "Hello!" } },
+        { id: "ja-u1l1-sayounara", type: "vocab", front: "さようなら", reading: "sayōnara", meaning: "goodbye", example: { jp: "さようなら。", en: "Goodbye." } },
+        { id: "ja-u1l1-hai", type: "vocab", front: "はい", reading: "hai", meaning: "yes", example: { jp: "はい。", en: "Yes." } },
+        { id: "ja-u1l1-iie", type: "vocab", front: "いいえ", reading: "iie", meaning: "no", example: { jp: "いいえ。", en: "No." } },
+      ],
+    },
+    { id: "ja-u1l2", title: "か row", locked: true },
+    { id: "ja-u1l3", title: "さ row", locked: true },
+    { id: "ja-u1l4", title: "た row", locked: true },
+    { id: "ja-u1l5", title: "な row + checkpoint", locked: true },
+  ],
+};
