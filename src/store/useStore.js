@@ -1,8 +1,18 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { seedItems, getLesson, LANGUAGES } from "../data/index.js";
-import { schedule, startOfToday, DAY_MS } from "./srs.js";
+import { newCard, schedule, isDue, startOfTomorrow } from "./srs.js";
 import { nextRung, isReviewable } from "./mastery.js";
+import { migrateState, PERSIST_VERSION } from "./migrate.js";
+
+// Seed every item with a fresh FSRS card attached as its srs. Card attachment
+// lives here (not in the data loader) per Brief 2.
+function freshSeed() {
+  const seed = seedItems();
+  const out = {};
+  for (const [id, it] of Object.entries(seed)) out[id] = { ...it, srs: newCard() };
+  return out;
+}
 
 // ISO date string (YYYY-MM-DD) in local time, used for streak/daily bookkeeping.
 function todayISO() {
@@ -43,7 +53,7 @@ export const useStore = create(
       // daily bookkeeping over if the calendar day has changed.
       seedOnce: () => {
         set((s) => {
-          const items = Object.keys(s.items).length ? s.items : seedItems();
+          const items = Object.keys(s.items).length ? s.items : freshSeed();
           let daily = s.daily;
           if (daily.date !== todayISO()) {
             daily = { date: todayISO(), reviewsCleared: false, lessonDone: false };
@@ -54,13 +64,11 @@ export const useStore = create(
         });
       },
 
-      // Selector: items that are due for review today AND have climbed at least
-      // to RECOGNIZED. Fresh items (rung 0) are not "due" — they enter via a
-      // lesson.
+      // Selector: items whose FSRS card is due AND that have climbed at least to
+      // RECOGNIZED. Fresh items (rung 0) are not "due" — they enter via a lesson.
       dueItems: () => {
-        const today = startOfToday();
         return Object.values(get().items).filter(
-          (it) => isReviewable(it) && (it.srs?.due ?? 0) <= today
+          (it) => isReviewable(it) && it.srs && isDue(it.srs)
         );
       },
 
@@ -101,15 +109,17 @@ export const useStore = create(
         set((s) => {
           const lesson = getLesson(lessonId);
           const items = { ...s.items };
-          const dueTomorrow = startOfToday() + DAY_MS;
+          const dueTomorrow = startOfTomorrow();
           if (lesson?.items) {
             for (const def of lesson.items) {
               const it = items[def.id];
               if (it && (it.rung ?? 0) < 1) {
+                // Keep the fresh FSRS card (State.New) but defer its first
+                // review to tomorrow; its first real grade happens then.
                 items[def.id] = {
                   ...it,
                   rung: 1,
-                  srs: { ...it.srs, intervalDays: 1, due: dueTomorrow },
+                  srs: { ...it.srs, due: dueTomorrow },
                 };
               }
             }
@@ -174,7 +184,7 @@ export const useStore = create(
       // Dev/testing helper: wipe all persisted progress back to seed.
       resetAll: () => {
         set({
-          items: seedItems(),
+          items: freshSeed(),
           languages: initialLanguages(),
           streak: { current: 0, longest: 0, freezes: 2, lastActive: null },
           stats: { xpTotal: 0 },
@@ -185,6 +195,10 @@ export const useStore = create(
     }),
     {
       name: "vocalingo-v1",
+      version: PERSIST_VERSION,
+      // One-time, on rehydrate: replace any pre-FSRS srs with a fresh card,
+      // preserving rung and all other progress (don't crash old v0.1 state).
+      migrate: migrateState,
       partialize: (s) => ({
         items: s.items,
         languages: s.languages,

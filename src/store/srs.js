@@ -1,45 +1,42 @@
-// Simple, swappable interval scheduler. Isolated here so FSRS can drop in later
-// without touching screens or the store's calling convention.
-//
-// schedule(srs, grade) -> new srs state
-//   grade ∈ {again, hard, good, easy}
+// Real spaced repetition via FSRS. This module is the single seam between the
+// app and the scheduling algorithm: screens and the store only ever call
+// newCard / schedule / isDue, so the algorithm can be tuned (or swapped for
+// trained weights) without touching anything else.
+import { fsrs, generatorParameters, createEmptyCard, Rating } from "ts-fsrs";
 
-export const DAY_MS = 24 * 60 * 60 * 1000;
+// FSRS parameters kept in one exported place so we can tune (or load trained
+// weights) later. enable_fuzz spreads due dates slightly to avoid pile-ups.
+export const FSRS_PARAMS = generatorParameters({ enable_fuzz: true });
 
-// Start of "today" in local time, as an epoch-ms timestamp.
-export function startOfToday() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+const f = fsrs(FSRS_PARAMS);
+
+const GRADE = {
+  again: Rating.Again,
+  hard: Rating.Hard,
+  good: Rating.Good,
+  easy: Rating.Easy,
+};
+
+// A brand-new FSRS card (State.New, due now).
+export const newCard = () => createEmptyCard(Date.now());
+
+// Run FSRS for one review and return the updated card. The returned card
+// carries due, stability, difficulty, state, reps, lapses, last_review, etc.
+// Tolerates cards whose date fields are ISO strings (rehydrated from storage).
+export function schedule(card, grade, now = new Date()) {
+  return f.repeat(card, now)[GRADE[grade]].card;
 }
 
-export function schedule(srs, grade) {
-  const prev = srs.intervalDays || 0;
-  let { ease, reps, lapses } = srs;
-  let intervalDays;
+// Is this card due for review at `now`? Works whether card.due is a Date
+// (fresh) or an ISO string (rehydrated from localStorage).
+export const isDue = (card, now = Date.now()) =>
+  new Date(card.due).getTime() <= now;
 
-  switch (grade) {
-    case "again":
-      intervalDays = 0; // due today
-      ease = Math.max(1.3, ease - 0.2);
-      lapses += 1;
-      break;
-    case "hard":
-      intervalDays = Math.max(1, Math.round(prev * 1.2));
-      ease = Math.max(1.3, ease - 0.05);
-      break;
-    case "good":
-      intervalDays = Math.max(1, Math.round((prev || 1) * ease));
-      reps += 1;
-      break;
-    case "easy":
-      intervalDays = Math.max(2, Math.round((prev || 1) * ease * 1.3));
-      reps += 1;
-      break;
-    default:
-      intervalDays = prev;
-  }
-
-  const due = startOfToday() + intervalDays * DAY_MS;
-  return { ease, intervalDays, due, reps, lapses };
+// Start of tomorrow (local) as a Date — used when a lesson introduces an item
+// and we want its first review the next day rather than immediately.
+export function startOfTomorrow() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 1);
+  return d;
 }

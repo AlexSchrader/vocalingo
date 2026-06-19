@@ -22,7 +22,8 @@ export function seedItems() {
           lesson: lesson.lesson,
           meaning: item.meaning ?? null,
           example: item.example ?? null,
-          srs: { ease: 2.5, intervalDays: 0, due: 0, reps: 0, lapses: 0 },
+          // srs (an FSRS card) is attached by the store's seedOnce, not here,
+          // so this stays a pure content loader.
           rung: 0,
         };
       }

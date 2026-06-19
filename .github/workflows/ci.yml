@@ -17,6 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
       - run: npm ci
+      - run: npm run test:unit         # FSRS + migration logic (node:test)
       - run: npx playwright install --with-deps chromium
       - run: npm test                  # dev smoke
       - run: npm run build

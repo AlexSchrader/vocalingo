@@ -12,6 +12,7 @@ const command =
 
 export default defineConfig({
   testDir: "./tests",
+  testMatch: "**/*.spec.js", // Playwright owns *.spec.js; node:test owns tests/unit/*.test.mjs
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
