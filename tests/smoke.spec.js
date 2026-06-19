@@ -139,8 +139,13 @@ test("reviews are app-judged — no self-grading, grades persist", async ({ page
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
 
+  // Seed ONCE — addInitScript runs before every navigation (incl. reload), so
+  // guard it or the reload would clobber the session's persisted progress (the
+  // very thing this test verifies).
   await page.addInitScript(
-    (json) => localStorage.setItem("vocalingo-v1", json),
+    (json) => {
+      if (!localStorage.getItem("vocalingo-v1")) localStorage.setItem("vocalingo-v1", json);
+    },
     JSON.stringify(reviewState())
   );
   await page.goto("/");
