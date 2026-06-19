@@ -28,6 +28,7 @@ export default function SpeakCard({ item, onAdvance }) {
         <div style={{ fontFamily: F.mono, fontSize: 18, color: C.ai }}>{item.reading}</div>
         <button
           onClick={() => setRecorded(true)}
+          data-testid="record"
           aria-label="Record"
           style={{
             width: 76,

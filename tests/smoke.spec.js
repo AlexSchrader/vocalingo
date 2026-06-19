@@ -20,7 +20,17 @@ test("can navigate all four tabs", async ({ page }) => {
 // Plays whatever card is currently on screen. Returns false once the session is
 // over (the "Back to Today" button is showing).
 async function playOneCard(page) {
-  if (await page.getByRole("button", { name: "Back to Today" }).isVisible().catch(() => false)) {
+  const done = page.getByRole("button", { name: "Back to Today" });
+  // Wait for the next card's control (or the finish screen) to actually render
+  // before probing, so we don't read a mid-transition frame.
+  const anyControl =
+    '[data-testid="reveal"],[data-testid="trace-pad"],[data-testid="record"],[data-testid="tile"]';
+  await Promise.race([
+    page.locator(anyControl).first().waitFor({ state: "visible", timeout: 8000 }),
+    done.waitFor({ state: "visible", timeout: 8000 }),
+  ]).catch(() => {});
+
+  if (await done.isVisible().catch(() => false)) {
     return false;
   }
   // Recall card
@@ -45,14 +55,15 @@ async function playOneCard(page) {
     await page.getByRole("button", { name: "Continue" }).click();
     return true;
   }
-  // Speak card
-  const record = page.getByRole("button", { name: "Record" });
+  // Speak card (testid avoids the "Record" / "Record to continue" name clash)
+  const record = page.getByTestId("record");
   if (await record.isVisible().catch(() => false)) {
     await record.click();
     await page.getByRole("button", { name: "Continue" }).click();
     return true;
   }
-  return true;
+  // Nothing actionable found — stop so the loop fails fast instead of spinning.
+  return false;
 }
 
 test("daily loop runs end to end and persists", async ({ page }) => {
