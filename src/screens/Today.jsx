@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Flame, BookOpen, RotateCcw, Sparkles, Lock, Check } from "lucide-react";
 import { useStore } from "../store/useStore.js";
@@ -54,12 +55,20 @@ function Step({ icon: Icon, n, title, sub, state }) {
 
 export default function Today() {
   const navigate = useNavigate();
-  const due = useStore((s) => s.dueItems());
-  const reviewsLocked = useStore((s) => s.reviewsLocked());
+  // Select STABLE refs (raw state + action fns) and derive in useMemo. Zustand
+  // v5 dropped selector memoization, so returning a fresh array straight from a
+  // selector (e.g. `s.dueItems()`) makes useSyncExternalStore loop and crash the
+  // mount. Computing here keeps the snapshot stable.
+  const items = useStore((s) => s.items);
   const daily = useStore((s) => s.daily);
   const streak = useStore((s) => s.streak);
   const stats = useStore((s) => s.stats);
   const ja = useStore((s) => s.languages.ja);
+  const dueItemsFn = useStore((s) => s.dueItems);
+  const reviewsLockedFn = useStore((s) => s.reviewsLocked);
+
+  const due = useMemo(() => dueItemsFn(), [items, dueItemsFn]);
+  const reviewsLocked = useMemo(() => reviewsLockedFn(), [items, daily, reviewsLockedFn]);
 
   const reviewState = daily.reviewsCleared ? "done" : "active";
   const lessonState = daily.lessonDone ? "done" : reviewsLocked ? "locked" : "active";
