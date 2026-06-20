@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { seedItems, getLesson, LANGUAGES } from "../data/index.js";
-import { newCard, schedule, isDue, startOfTomorrow } from "./srs.js";
+import { seedItems, LANGUAGES } from "../data/index.js";
+import { newCard, schedule, isDue } from "./srs.js";
 import { nextRung, isReviewable } from "./mastery.js";
 import { migrateState, PERSIST_VERSION } from "./migrate.js";
 
@@ -103,29 +103,30 @@ export const useStore = create(
         set((s) => ({ daily: { ...s.daily, date: todayISO(), reviewsCleared: true } }));
       },
 
-      // Mark the day's lesson done and graduate freshly-introduced items: rung 0
-      // items in the lesson climb to RECOGNIZED (rung 1) and become due tomorrow.
-      completeLesson: (lessonId) => {
+      // Graduate a freshly-learned item out of the in-session learning steps into
+      // FSRS spaced review (Brief A.1). Fires exactly once per item: first real
+      // FSRS schedule, rung → RECOGNIZED, XP once. `grade` reflects how the
+      // learning steps went (`good` clean, `hard` if any retry).
+      graduateItem: (id, grade) => {
         set((s) => {
-          const lesson = getLesson(lessonId);
-          const items = { ...s.items };
-          const dueTomorrow = startOfTomorrow();
-          if (lesson?.items) {
-            for (const def of lesson.items) {
-              const it = items[def.id];
-              if (it && (it.rung ?? 0) < 1) {
-                // Keep the fresh FSRS card (State.New) but defer its first
-                // review to tomorrow; its first real grade happens then.
-                items[def.id] = {
-                  ...it,
-                  rung: 1,
-                  srs: { ...it.srs, due: dueTomorrow },
-                };
-              }
-            }
-          }
-          return { items, daily: { ...s.daily, date: todayISO(), lessonDone: true } };
+          const item = s.items[id];
+          if (!item || (item.rung ?? 0) >= 1) return s; // already graduated
+          const srs = schedule(item.srs, grade);
+          const gain = XP_BY_GRADE[grade] ?? 0;
+          const items = { ...s.items, [id]: { ...item, srs, rung: 1 } };
+          const stats = { ...s.stats, xpTotal: s.stats.xpTotal + gain };
+          const lang = s.languages[item.lang];
+          const languages = lang
+            ? { ...s.languages, [item.lang]: { ...lang, xp: lang.xp + gain } }
+            : s.languages;
+          return { items, stats, languages };
         });
+      },
+
+      // Mark the day's lesson done. Graduation of new items is now per-item via
+      // graduateItem (Brief A.1) — this no longer blanket-graduates anything.
+      completeLesson: () => {
+        set((s) => ({ daily: { ...s.daily, date: todayISO(), lessonDone: true } }));
       },
 
       // Daily goal is met when both halves of the loop are done. On the first

@@ -7,10 +7,11 @@ import TypeCard from "../components/games/TypeCard.jsx";
 import BuildCard from "../components/games/BuildCard.jsx";
 import { useStore } from "../store/useStore.js";
 import { getLesson } from "../data/index.js";
+import { initLearn, currentStep, answerStep } from "../store/learnQueue.js";
 import { C, F } from "../theme.js";
 
-// Pick the review card for an item from its mastery rung — the ladder doing its
-// job. New (rung 0) items are taught, not tested; that's handled separately.
+// Pick the REVIEW card for a due item from its mastery rung — the ladder doing
+// its job. (Learning steps for new items are handled separately below.)
 //   RECOGNIZED (1) → multiple choice
 //   RECALLED   (2) → type the meaning (kana: type the rōmaji)
 //   PRODUCED+  (3+) → produce the Japanese (vocab: build; kana: type)
@@ -21,11 +22,17 @@ function reviewStepFor(item) {
   return item.type === "vocab" ? { kind: "build" } : { kind: "type", mode: "produce" };
 }
 
-// The daily session runner. It plays, in order:
-//   1. REVIEW — every due item, app-judged (computes grade → SRS + rung).
-//   2. LEARN  — the lesson's fresh items, taught (Teach card, no grading).
-// Finishing calls completeReviews + completeLesson + rollDailyGoal, then returns
-// to Today with the loop visibly satisfied.
+// The recall (check2) card for an item in its learning steps: recall the meaning
+// (vocab) or produce the rōmaji (kana).
+function recallMode(item) {
+  return item.type === "vocab" ? "meaning" : "produce";
+}
+
+// The daily session runner (Brief A.1):
+//   1. REVIEW — every due item, single-pass, app-judged (grade → FSRS + rung).
+//   2. LEARN  — fresh items run teach → interleaved recognition + recall checks
+//      → graduate to FSRS spaced review (graduateItem, once each).
+// The session is continuous; finishing returns to Today with the floor met.
 export default function Lesson() {
   const { lessonId } = useParams();
   const navigate = useNavigate();
@@ -33,56 +40,48 @@ export default function Lesson() {
   const items = useStore((s) => s.items);
   const dueItems = useStore((s) => s.dueItems);
   const gradeItem = useStore((s) => s.gradeItem);
+  const graduateItem = useStore((s) => s.graduateItem);
   const completeReviews = useStore((s) => s.completeReviews);
   const completeLesson = useStore((s) => s.completeLesson);
   const rollDailyGoal = useStore((s) => s.rollDailyGoal);
 
   const lesson = useMemo(() => getLesson(lessonId), [lessonId]);
 
-  // Snapshot the session queue once on mount so grading (which mutates due/rung)
-  // doesn't reshuffle the steps mid-session.
-  const steps = useMemo(() => {
-    // Reviews first (clear the debt), then teach new material.
-    const reviewQueue = dueItems().map((it) => ({
-      ...reviewStepFor(it),
-      phase: "review",
-      id: it.id,
-    }));
-    const lessonItems = (lesson?.items ?? [])
-      .map((def) => items[def.id])
-      .filter(Boolean);
-    const fresh = lessonItems.filter((it) => (it.rung ?? 0) < 1);
-    const learnQueue = fresh.map((it) => ({ kind: "teach", phase: "learn", id: it.id }));
-    return [...reviewQueue, ...learnQueue];
+  // Snapshot both queues once on mount so grading (which mutates due/rung)
+  // doesn't reshuffle the session.
+  const reviewQueue = useMemo(
+    () => dueItems().map((it) => ({ ...reviewStepFor(it), id: it.id })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lessonId]
+  );
+  const freshIds = useMemo(() => {
+    const lessonItems = (lesson?.items ?? []).map((def) => items[def.id]).filter(Boolean);
+    return lessonItems.filter((it) => (it.rung ?? 0) < 1).map((it) => it.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
-  const reviewCount = useMemo(() => steps.filter((s) => s.phase === "review").length, [steps]);
-
-  const [idx, setIdx] = useState(0);
+  const [reviewIdx, setReviewIdx] = useState(0);
+  const [learn, setLearn] = useState(() => initLearn(freshIds));
   const [reviewsDone, setReviewsDone] = useState(false);
   const [finished, setFinished] = useState(false);
 
-  // Fire completeReviews exactly once, when we've stepped past every review card
-  // (immediately if there were none).
+  const inReview = reviewIdx < reviewQueue.length;
+  const learnStep = currentStep(learn);
+  const done = !inReview && learnStep === null;
+
+  // Clear the review debt exactly once, when the review phase ends.
   useEffect(() => {
-    if (!reviewsDone && idx >= reviewCount) {
+    if (!reviewsDone && !inReview) {
       completeReviews();
       setReviewsDone(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, reviewCount, reviewsDone]);
+  }, [inReview, reviewsDone]);
 
-  const total = steps.length;
-  const progress = total === 0 ? 1 : Math.min(idx, total) / total;
-  const done = idx >= total;
-
-  // Auto-finish once we've stepped past the last card. Guarded so it's a no-op
-  // when the lesson id is unknown. Kept above any early return to satisfy the
-  // Rules of Hooks (hooks must run in the same order every render).
+  // Mark the lesson done once everything is played. Kept above the early return
+  // for the Rules of Hooks.
   useEffect(() => {
     if (lesson && done && !finished) {
-      completeReviews();
       completeLesson(lessonId);
       rollDailyGoal();
       setFinished(true);
@@ -98,14 +97,12 @@ export default function Lesson() {
     );
   }
 
-  const advance = () => setIdx((i) => i + 1);
-
-  const onGrade = (id, grade) => {
-    gradeItem(id, grade);
-    advance();
-  };
+  const total = reviewQueue.length + learn.queue.length;
+  const current = reviewIdx + learn.pos;
+  const progress = total === 0 ? 1 : Math.min(current, total) / total;
 
   if (finished || done) {
+    const learned = freshIds.length;
     return (
       <PhaseShell title={lesson.title} progress={1}>
         <div
@@ -120,8 +117,10 @@ export default function Lesson() {
         >
           <div style={{ fontSize: 56 }}>🎉</div>
           <div style={{ fontFamily: F.disp, fontSize: 24, fontWeight: 700 }}>Session complete</div>
-          <div style={{ color: C.inkSoft, maxWidth: 280 }}>
-            Reviews cleared and {lesson.title} learned. New items are due tomorrow.
+          <div style={{ color: C.inkSoft, maxWidth: 300 }}>
+            {learned > 0
+              ? `Nice — you practiced ${learned} new word${learned === 1 ? "" : "s"}. They'll come back for review in a few days.`
+              : "Reviews cleared. Nothing new to learn right now."}
           </div>
           <button
             onClick={() => navigate("/")}
@@ -145,24 +144,58 @@ export default function Lesson() {
     );
   }
 
-  const step = steps[idx];
-  const item = items[step.id];
-  const phaseLabel = step.phase === "review" ? "Review" : "Learn";
+  // --- handlers ---
+  const onReviewGrade = (id, grade) => {
+    gradeItem(id, grade);
+    setReviewIdx((i) => i + 1);
+  };
+  const advanceTeach = () => setLearn((st) => answerStep(st, null).state);
+  const onCheck = (grade) => {
+    const result = { pass: grade !== "again", clean: grade === "good" || grade === "easy" };
+    const { state, graduated } = answerStep(learn, result);
+    if (graduated) graduateItem(graduated.id, graduated.grade);
+    setLearn(state);
+  };
+
+  // --- current card ---
+  let label;
+  let body;
+  if (inReview) {
+    const step = reviewQueue[reviewIdx];
+    const item = items[step.id];
+    label = "Review";
+    const onGraded = (g) => onReviewGrade(item.id, g);
+    body =
+      step.kind === "choice" ? (
+        <ChoiceCard key={`r${reviewIdx}`} item={item} allItems={items} onGraded={onGraded} />
+      ) : step.kind === "type" ? (
+        <TypeCard key={`r${reviewIdx}`} item={item} mode={step.mode} onGraded={onGraded} />
+      ) : (
+        <BuildCard key={`r${reviewIdx}`} item={item} onGraded={onGraded} />
+      );
+  } else {
+    const item = items[learnStep.id];
+    // Key by queue position so a re-presented (or repeated) card mounts fresh.
+    const k = `l${learn.pos}`;
+    if (learnStep.step === "teach") {
+      label = "Learn";
+      body = <TeachCard key={k} item={item} onAdvance={advanceTeach} />;
+    } else if (learnStep.step === "check1") {
+      label = "Practice";
+      body = <ChoiceCard key={k} item={item} allItems={items} onGraded={onCheck} />;
+    } else {
+      label = "Practice";
+      body = <TypeCard key={k} item={item} mode={recallMode(item)} onGraded={onCheck} />;
+    }
+  }
 
   return (
     <PhaseShell
-      title={`${phaseLabel} · ${idx + 1}/${total}`}
+      title={`${label} · ${Math.min(current + 1, total)}/${total}`}
       progress={progress}
       onClose={() => navigate("/")}
     >
-      {step.kind === "teach" && <TeachCard item={item} onAdvance={advance} />}
-      {step.kind === "choice" && (
-        <ChoiceCard item={item} allItems={items} onGraded={(g) => onGrade(item.id, g)} />
-      )}
-      {step.kind === "type" && (
-        <TypeCard item={item} mode={step.mode} onGraded={(g) => onGrade(item.id, g)} />
-      )}
-      {step.kind === "build" && <BuildCard item={item} onGraded={(g) => onGrade(item.id, g)} />}
+      {body}
     </PhaseShell>
   );
 }

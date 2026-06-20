@@ -119,17 +119,26 @@ test("new words are taught, the loop completes, and it persists", async ({ page 
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
 
-  await page.goto("/"); // fresh state — nothing due, 10 items to teach
-  await page.getByRole("button", { name: /start reviews/i }).click();
+  await page.goto("/"); // fresh state — nothing due, 10 items to teach + check
+  await page.getByTestId("start-session").click();
 
-  for (let i = 0; i < 30; i++) {
+  // Teach (10) + interleaved recognition + recall checks (~20) → graduations.
+  for (let i = 0; i < 80; i++) {
     if (!(await playCard(page))) break;
-    await page.waitForTimeout(30);
+    await page.waitForTimeout(20);
   }
   await page.getByRole("button", { name: "Back to Today" }).click();
 
   await expect(page.getByText("Lesson complete")).toBeVisible();
   await expect(page.getByText(/1 day\b/)).toBeVisible(); // streak ticked
+
+  // Graduation: a taught item is now RECOGNIZED and scheduled into the FUTURE
+  // (spaced review), not just "seen" — this is what learning steps buy us.
+  const persisted = await page.evaluate(() => localStorage.getItem("vocalingo-v1"));
+  const graded = JSON.parse(persisted).state.items["ja-u1l1-ohayou"];
+  expect(graded.rung).toBeGreaterThanOrEqual(1);
+  expect(new Date(graded.srs.due).getTime()).toBeGreaterThan(Date.now());
+
   await page.reload();
   await expect(page.getByText("Lesson complete")).toBeVisible(); // persisted
   expect(errors).toEqual([]);
@@ -149,7 +158,7 @@ test("reviews are app-judged — no self-grading, grades persist", async ({ page
     JSON.stringify(reviewState())
   );
   await page.goto("/");
-  await page.getByRole("button", { name: /start reviews/i }).click();
+  await page.getByTestId("start-session").click();
 
   // A review card is up; there are NO self-grade buttons anywhere.
   await page.locator('[data-correct],[data-testid="type-card"]').first().waitFor({ state: "visible" });

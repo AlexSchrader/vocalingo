@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Flame, BookOpen, RotateCcw, Sparkles, Lock, Check } from "lucide-react";
+import { Flame, BookOpen, RotateCcw, Lock, Check } from "lucide-react";
 import { useStore } from "../store/useStore.js";
 import { UNITS } from "../data/index.js";
 import { C, F } from "../theme.js";
@@ -78,16 +78,26 @@ export default function Today() {
 
   const reviewState = daily.reviewsCleared ? "done" : "active";
   const lessonState = daily.lessonDone ? "done" : reviewsLocked ? "locked" : "active";
-  const proveState = daily.lessonDone ? "done" : "active";
 
-  const allDone = daily.reviewsCleared && daily.lessonDone;
-  const ctaLabel = !daily.reviewsCleared
-    ? "Start reviews"
-    : !daily.lessonDone
-    ? "Start lesson"
-    : "Review again";
+  // Is there still new material to learn? (rung-0 items remain in the lesson.)
+  const hasNew = (TODAY_LESSON?.items ?? []).some((d) => (items[d.id]?.rung ?? 0) < 1);
+  // Daily goal is a FLOOR, not a ceiling: meeting it ticks the streak and shows
+  // a marker, but never ends the session or caps how much you can do.
+  const goalMet = daily.reviewsCleared && daily.lessonDone;
 
   const start = () => TODAY_LESSON && navigate(`/lesson/${TODAY_LESSON.id}`);
+
+  // Continuous CTA — no "done for today" wall. Locked reviews first; then learn
+  // as long as there's new material; otherwise you're genuinely caught up until
+  // FSRS surfaces the next review (not a cap).
+  let ctaLabel;
+  let ctaDisabled = false;
+  if (reviewsLocked) ctaLabel = "Start reviews";
+  else if (hasNew) ctaLabel = goalMet ? "Keep learning" : "Start lesson";
+  else {
+    ctaLabel = "All caught up";
+    ctaDisabled = true;
+  }
 
   return (
     <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16, minHeight: "100%" }}>
@@ -95,7 +105,7 @@ export default function Today() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <div style={{ fontFamily: F.disp, fontSize: 22, fontWeight: 700 }}>Today</div>
-          <div style={{ fontSize: 13, color: C.inkSoft }}>Clear reviews · lesson · prove it</div>
+          <div style={{ fontSize: 13, color: C.inkSoft }}>Clear reviews, then learn — go as long as you like</div>
         </div>
         <div
           style={{
@@ -163,33 +173,53 @@ export default function Today() {
           }
           state={lessonState}
         />
-        <Step
-          icon={Sparkles}
-          n={3}
-          title="Prove it"
-          sub={daily.lessonDone ? "Proved — nice work" : "Speak & build what you learned"}
-          state={proveState}
-        />
       </div>
 
-      {/* Primary CTA */}
+      {/* Goal-met marker — a floor, not a terminator. */}
+      {goalMet && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 12px",
+            borderRadius: 12,
+            background: "#EAF3EC",
+            border: `1px solid ${C.matcha}`,
+            color: C.matcha,
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          <Check size={16} /> Daily goal met — keep going as long as you like.
+        </div>
+      )}
+
+      {/* Primary CTA — continuous, no daily wall. */}
       <button
+        data-testid="start-session"
         onClick={start}
+        disabled={ctaDisabled}
         style={{
           padding: 18,
           borderRadius: 16,
           border: "none",
-          background: allDone ? C.matcha : C.ai,
-          color: "#fff",
+          background: ctaDisabled ? C.lockedBg : C.ai,
+          color: ctaDisabled ? C.locked : "#fff",
           fontSize: 17,
           fontWeight: 700,
           fontFamily: F.body,
-          cursor: "pointer",
-          boxShadow: "0 4px 14px rgba(42,74,123,0.25)",
+          cursor: ctaDisabled ? "default" : "pointer",
+          boxShadow: ctaDisabled ? "none" : "0 4px 14px rgba(42,74,123,0.25)",
         }}
       >
-        {allDone ? "Done for today — review again" : ctaLabel}
+        {ctaLabel}
       </button>
+      {ctaDisabled && (
+        <div style={{ fontSize: 12, color: C.inkSoft, textAlign: "center", marginTop: -6 }}>
+          Nothing due right now — your reviews are scheduled for later.
+        </div>
+      )}
 
       {/* Quick stats from store */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
