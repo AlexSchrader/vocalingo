@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { C, F } from "../../theme.js";
 import { deriveGrade } from "../../store/grading.js";
+import { sfxClick, sfxCorrect, sfxWrong } from "../../store/sfx.js";
 
 function shuffle(arr) {
   const a = [...arr];
@@ -25,6 +26,7 @@ export default function BuildCard({ item, onGraded }) {
   const full = picked.length === tiles.length;
 
   const commit = () => {
+    if (correct) sfxCorrect(); else sfxWrong();
     const grade = correct
       ? deriveGrade({
           kind: "typed",
@@ -79,7 +81,7 @@ export default function BuildCard({ item, onGraded }) {
               key={i}
               data-testid="tile"
               disabled={used}
-              onClick={() => setPicked((p) => [...p, i])}
+              onClick={() => { sfxClick(); setPicked((p) => [...p, i]); }}
               style={{
                 padding: "12px 16px",
                 borderRadius: 10,

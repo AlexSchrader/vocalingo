@@ -1,10 +1,28 @@
+import { useEffect, useRef, useState } from "react";
 import { Volume2 } from "lucide-react";
 import { C, F } from "../../theme.js";
+import { sfxClick } from "../../store/sfx.js";
 
-// Teach / Present card. A brand-new item is shown — never tested cold. The
-// learner sees the word, reading, meaning (and example); active testing starts
-// at the first review. Audio slot is reserved for Brief B.
+function useItemAudio(itemId) {
+  const ref = useRef(null);
+  const [active, setActive] = useState(false);
+
+  function play() {
+    ref.current?.pause();
+    const audio = new Audio(`/audio/ja/${itemId}.mp3`);
+    ref.current = audio;
+    audio.onended = () => setActive(false);
+    audio.play().then(() => setActive(true)).catch(() => {});
+  }
+
+  // Autoplay on reveal
+  useEffect(() => { play(); }, [itemId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { play, active };
+}
+
 export default function TeachCard({ item, onAdvance }) {
+  const { play, active } = useItemAudio(item.id);
   const isKana = item.type === "kana";
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 16 }}>
@@ -57,22 +75,22 @@ export default function TeachCard({ item, onAdvance }) {
           </div>
         )}
 
-        {/* Audio slot reserved for Brief B. */}
         <button
-          disabled
-          aria-label="Play pronunciation (coming soon)"
+          onClick={play}
+          aria-label="Replay pronunciation"
           style={{
             marginTop: 4,
             width: 44,
             height: 44,
             borderRadius: "50%",
-            border: `1px solid ${C.line}`,
-            background: C.washi,
-            color: C.locked,
+            border: `1px solid ${active ? C.ai : C.line}`,
+            background: active ? C.ai : C.washi,
+            color: active ? "#fff" : C.ai,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            cursor: "default",
+            cursor: "pointer",
+            transition: "background 150ms, border-color 150ms",
           }}
         >
           <Volume2 size={20} />
@@ -80,7 +98,7 @@ export default function TeachCard({ item, onAdvance }) {
       </div>
 
       <button
-        onClick={onAdvance}
+        onClick={() => { sfxClick(); onAdvance(); }}
         style={{
           padding: 16,
           borderRadius: 14,

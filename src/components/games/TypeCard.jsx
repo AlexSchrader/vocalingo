@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { C, F } from "../../theme.js";
 import { deriveGrade } from "../../store/grading.js";
 import { checkMeaning, checkReading, checkProduce } from "../../store/answer.js";
+import { sfxCorrect, sfxWrong } from "../../store/sfx.js";
 
 // Typed answer (rung RECALLED → type the meaning; rung PRODUCED → produce the
 // Japanese). The app judges: one free retry on a miss (caps the grade at
@@ -48,13 +49,16 @@ export default function TypeCard({ item, mode, onGraded }) {
   const submit = () => {
     if (phase === "feedback") return;
     if (spec.check(value)) {
+      sfxCorrect();
       const elapsed = performance.now() - shownAt.current;
       setGrade(deriveGrade({ kind: "typed", correct: true, retried, elapsedMs: elapsed, target: spec.answer }));
       setOutcome("correct");
       setPhase("feedback");
     } else if (!retried) {
+      sfxWrong();
       setRetried(true); // one free retry
     } else {
+      sfxWrong();
       setGrade("again");
       setOutcome("wrong");
       setPhase("feedback");

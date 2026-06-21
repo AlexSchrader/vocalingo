@@ -2,6 +2,7 @@ import { useState, useRef, useMemo, useEffect } from "react";
 import { C, F } from "../../theme.js";
 import { buildOptions } from "../../store/distractors.js";
 import { deriveGrade } from "../../store/grading.js";
+import { sfxCorrect, sfxWrong } from "../../store/sfx.js";
 
 // Multiple choice (rung RECOGNIZED). Vocab → pick the meaning; kana → pick the
 // reading. The app judges: correct → `good` (never `easy`), wrong → `again`
@@ -56,7 +57,7 @@ export default function ChoiceCard({ item, allItems, onGraded }) {
               data-testid="option"
               data-correct={String(o.correct)}
               disabled={answered}
-              onClick={() => !answered && setPicked(i)}
+              onClick={() => { if (answered) return; options[i].correct ? sfxCorrect() : sfxWrong(); setPicked(i); }}
               style={{
                 padding: "16px 12px",
                 borderRadius: 12,
