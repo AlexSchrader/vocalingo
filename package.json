@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "playwright test",
     "test:unit": "node --test tests/unit/*.test.mjs",
-    "validate:content": "node scripts/validate-content.mjs"
+    "validate:content": "node scripts/validate-content.mjs",
+    "generate:audio": "node scripts/generate-audio.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.460.0",
