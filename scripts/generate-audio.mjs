@@ -55,11 +55,11 @@ for (let i = 0; i < items.length; i++) {
   const out = join(OUT_DIR, `${item.id}.mp3`);
   const tag = `[${String(i + 1).padStart(2)}/${items.length}] ${item.id}`;
 
-  // Kana items: send the romaji reading (e.g. "no", "ka") so the model
-  // produces a clean isolated phoneme. Sending a raw kana character causes
-  // the multilingual model to read it as a particle/word and mispronounce it.
-  // Vocab items: send the full Japanese text — the model handles full words well.
-  const text = item.type === "kana" ? item.reading : item.front;
+  // Always send the Japanese text. language_code:"ja" forces the multilingual
+  // model to interpret every character as Japanese phonetics — single kana
+  // like い or の are pronounced as their correct Japanese phonemes instead of
+  // being read as English ("I", "no" interjection, etc.).
+  const text = item.front;
 
   if (existsSync(out)) {
     console.log(`  skip   ${tag}`);
@@ -78,8 +78,7 @@ for (let i = 0; i < items.length; i++) {
       body: JSON.stringify({
         text,
         model_id: "eleven_multilingual_v2",
-        // Lower stability = more natural human variation (less flat/robotic).
-        // style adds expressiveness; use_speaker_boost sharpens clarity.
+        language_code: "ja",
         voice_settings: {
           stability: 0.35,
           similarity_boost: 0.80,
