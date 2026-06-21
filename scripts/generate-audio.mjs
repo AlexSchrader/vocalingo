@@ -55,11 +55,15 @@ for (let i = 0; i < items.length; i++) {
   const out = join(OUT_DIR, `${item.id}.mp3`);
   const tag = `[${String(i + 1).padStart(2)}/${items.length}] ${item.id}`;
 
-  // Single kana characters (あ, か, の…) get word-completed by the TTS model
-  // when sent alone — e.g. "あ" becomes "asai". Appending the long-vowel mark
-  // "ー" forces the model to read just the mora sound ("aー", "kaー") with no
-  // ambiguity. Multi-character items (vocab words) are sent as-is.
-  const text = item.front.length === 1 ? item.front + "ー" : item.front;
+  // Kana items → send romaji. "ka", "shi", "tsu" etc. are unambiguous in any
+  // language. Two vowels need phonetic overrides: bare "i" is read as the
+  // English pronoun "I" (eye sound); bare "u" triggers a verbal filler.
+  // "ee" and "oo" give the correct Japanese vowel sounds without language_code.
+  // Vocab items → send full Japanese text; multi-character words are fine as-is.
+  const ROMAJI_FIX = { i: "ee", u: "oo" };
+  const text = item.type === "kana"
+    ? (ROMAJI_FIX[item.reading] ?? item.reading)
+    : item.front;
 
   if (existsSync(out)) {
     console.log(`  skip   ${tag}`);
@@ -78,7 +82,6 @@ for (let i = 0; i < items.length; i++) {
       body: JSON.stringify({
         text,
         model_id: "eleven_multilingual_v2",
-        language_code: "ja",
         voice_settings: {
           stability: 0.35,
           similarity_boost: 0.80,
