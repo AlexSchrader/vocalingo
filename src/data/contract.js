@@ -212,6 +212,18 @@ export function validateContent(units, languages) {
     }
   }
 
+  // Warning: multi-word vocab with no accept[] synonyms. A typed-meaning check
+  // against e.g. "good morning" will reject "morning" without an accept entry.
+  for (const { item } of allItems) {
+    if (item.type !== "vocab") continue;
+    const meaning = item.meaning ?? "";
+    if (meaning.trim().includes(" ") && (!item.accept || item.accept.length === 0))
+      w(
+        `item ${item.id}: multi-word meaning "${meaning}" has no accept[] synonyms — ` +
+          `typed answers may reject valid paraphrases`
+      );
+  }
+
   // Warning: distractor sparseness. A choice card needs at least 3 same-type
   // peers at/below the item's CEFR level to show 4 options.
   for (const { item, lessonCefr } of allItems) {

@@ -144,3 +144,5 @@ Dormant (not yet wired):
 
 - A choice card needs ≥ 3 same-type distractors at/below the item's CEFR level.
   Fewer options make guessing trivial.
+- Multi-word vocab meanings (e.g. `"good morning"`) with an empty or absent `accept[]`
+  will reject plausible typed paraphrases (e.g. `"morning"`). Add synonyms to `accept`.
