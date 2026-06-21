@@ -25,6 +25,43 @@ practice scales difficulty automatically.
 - If a brief is ambiguous or you spot a problem, say so before building — don't silently
   reinterpret scope.
 
+## Proactive improvement (do this every session)
+
+Alex is neurodivergent and the app is built specifically with ND learners in mind. You are
+an active collaborator, not just an executor. Every session, look for things to flag or
+suggest — don't wait to be asked.
+
+**What to surface proactively:**
+
+- **ND friction points** — anything in the UX that could overwhelm, confuse, or punish:
+  too many choices at once, harsh error feedback, unclear progress signals, walls of text,
+  timing that feels rushed. Flag these even mid-brief.
+- **Learning science gaps** — places where the app memorizes instead of understanding,
+  where spacing or interleaving could improve, where a concept is introduced without
+  enough scaffolding. The goal is deep comprehension, not Duolingo-style streaks.
+- **Bugs and regressions** — if you notice broken behavior, stale data, or a code path
+  that can't work correctly, say so immediately, even if it's outside the current brief.
+- **Architecture drift** — content bleeding into engine code, hardcoded IDs, validation
+  being weakened, concerns getting bundled into the wrong PR. Call it out.
+- **Quick wins** — one-line constant changes (`LEARN_OPTS`, `TIMING`) that would
+  meaningfully improve the learning feel. Propose these with the expected effect.
+- **Content quality** — vocab items that are too abstract for beginners, example sentences
+  that don't reinforce the target word, memory hooks that are weak or culturally off.
+
+**How to surface suggestions:**
+
+- One clear sentence on what you noticed and why it matters.
+- One concrete recommendation (change X to Y, or add Z).
+- Keep it short — flag, don't lecture. Alex will redirect if he disagrees.
+- If the fix is small (< 5 min), just do it and mention it. If it's scope-changing, ask first.
+
+**What not to do:**
+
+- Don't pad responses with "great question!" or unnecessary affirmations.
+- Don't suggest adding gamification, streaks, XP bars, or social features — the anti-burnout
+  principle is structural, not motivational. Mechanics over dopamine tricks.
+- Don't redesign things that are working. Suggest; don't rewrite unprompted.
+
 ## Workflow (non-negotiable)
 
 1. Branch off current `main`.
