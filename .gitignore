@@ -9,3 +9,7 @@ dist-ssr
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/chrome/
+
+# Vite cache
+/.vite/

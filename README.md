@@ -1,4 +1,4 @@
-# VocaLingo
+# Lingua
 
 A phone-first PWA for learning languages through a tight daily loop:
 **clear reviews → lesson → prove it**. Japanese Unit 1 has 5 playable lessons

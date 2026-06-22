@@ -270,7 +270,7 @@ export const useStore = create(
       },
     }),
     {
-      name: "vocalingo-v1",
+      name: "lingua-v1",
       version: PERSIST_VERSION,
       // One-time, on rehydrate: replace any pre-FSRS srs with a fresh card,
       // preserving rung and all other progress (don't crash old v0.1 state).

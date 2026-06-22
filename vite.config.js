@@ -15,8 +15,8 @@ export default defineConfig({
         "icon-maskable-512.png",
       ],
       manifest: {
-        name: "VocaLingo",
-        short_name: "VocaLingo",
+        name: "Lingua",
+        short_name: "Lingua",
         display: "standalone",
         background_color: "#F1EDE2",
         theme_color: "#2A4A7B",

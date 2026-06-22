@@ -42,13 +42,13 @@ export default function AppShell() {
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <img
             src="/icon-192.png"
-            alt="VocaLingo"
+            alt="Lingua"
             width={26}
             height={26}
             style={{ borderRadius: 7, display: "block" }}
           />
           <span style={{ fontFamily: F.disp, fontWeight: 700, fontSize: 18, letterSpacing: -0.3 }}>
-            VocaLingo
+            Lingua
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

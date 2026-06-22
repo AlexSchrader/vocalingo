@@ -1,4 +1,4 @@
-// VocaLingo — companion (tutor) config
+// Lingua — companion (tutor) config
 // One companion per language. Used server-side by the tutor function (Brief D):
 // pick COMPANIONS[activeLang] -> Claude with `persona` as the system prompt ->
 // ElevenLabs with `voiceId` for the spoken reply.
