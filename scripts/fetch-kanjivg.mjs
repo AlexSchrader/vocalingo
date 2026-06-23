@@ -14,12 +14,13 @@ import { fileURLToPath } from "node:url";
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, "..");
 
-const { UNIT1 } = await import("../src/data/ja/unit1.js");
+const { UNITS } = await import("../src/data/index.js");
 
-// Collect every unique kana character across all lessons
+// Collect every unique kana character across all units and lessons
 const kanaChars = [
   ...new Set(
-    UNIT1.lessons
+    UNITS
+      .flatMap((u) => u.lessons)
       .flatMap((l) => l.items ?? [])
       .filter((it) => it.type === "kana")
       .map((it) => it.front)
