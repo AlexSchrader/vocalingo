@@ -164,7 +164,7 @@ async function playCard(page) {
           await page.mouse.up();
         }
       }
-      await page.waitForTimeout(1000); // snap animation + next stroke setup
+      await page.waitForTimeout(400); // snap animation + next stroke setup
     }
     return "trace";
   }
@@ -174,7 +174,10 @@ async function playCard(page) {
     if (await page.getByRole("button", { name: "Check" }).isVisible().catch(() => false)) {
       const answer = (await typeCard.getAttribute("data-answer").catch(() => "")) ?? "";
       await page.getByTestId("type-input").fill(answer);
-      await page.getByRole("button", { name: "Check" }).click();
+      // evaluate(el.click()) bypasses coordinate-stability check — fill() can
+      // shift layout before Playwright's click settles on coordinates.
+      const checkBtn = page.getByRole("button", { name: "Check" });
+      await checkBtn.evaluate((el) => el.click());
       await continueBtn.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
     }
     // Use evaluate(el.click()) to bypass Playwright's coordinate-based stability
@@ -239,6 +242,7 @@ test("zero-reviews-due: review step shows done, CTA goes straight to lesson", as
 });
 
 test("new words are taught, the loop completes, and it persists", async ({ page }) => {
+  test.setTimeout(120_000); // lesson 1 = 5 kana (guided trace, ~2.5s/stroke) + 5 vocab
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
 
