@@ -207,7 +207,7 @@ test("accepts a kana item with a hint field", () => {
 test("LIVE_CARD_KINDS is exactly the current active set", () => {
   assert.deepEqual(
     [...LIVE_CARD_KINDS].sort(),
-    ["build", "choice", "teach", "type:meaning", "type:produce"],
+    ["build", "choice", "teach", "trace", "type:meaning"],
     "Update both LIVE_CARD_KINDS in contract.js and this assertion when adding a new card kind"
   );
 });
