@@ -1,4 +1,5 @@
 import { normalizeReading } from "../store/answer.js";
+import { KANJIVG } from "./kanjivg.js";
 
 // The canonical list of card kinds the session runner actively routes.
 // Adding a new card kind means: (1) add it here, (2) wire it in Lesson.jsx,
@@ -8,8 +9,8 @@ export const LIVE_CARD_KINDS = [
   "teach",
   "choice",
   "type:meaning",
-  "type:produce",
   "build",
+  "trace",
 ];
 
 // --- internal constants -------------------------------------------------------
@@ -158,6 +159,8 @@ export function validateContent(units, languages) {
               e(`item ${item.id}: kana item must have meaning: null`);
             if (item.example !== null)
               e(`item ${item.id}: kana item must have example: null`);
+            if (!KANJIVG[item.front])
+              e(`item ${item.id}: kana "${item.front}" has no stroke data in KANJIVG — add it to src/data/kanjivg.js`);
           } else if (item.type === "vocab") {
             if (!item.meaning || typeof item.meaning !== "string" || !item.meaning.trim())
               e(`item ${item.id}: vocab item must have a non-empty meaning`);

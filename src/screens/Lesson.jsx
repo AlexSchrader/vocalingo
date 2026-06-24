@@ -5,6 +5,7 @@ import TeachCard from "../components/games/TeachCard.jsx";
 import ChoiceCard from "../components/games/ChoiceCard.jsx";
 import TypeCard from "../components/games/TypeCard.jsx";
 import BuildCard from "../components/games/BuildCard.jsx";
+import TraceCard from "../components/games/TraceCard.jsx";
 import { useStore } from "../store/useStore.js";
 import { getLesson } from "../data/index.js";
 import { LIVE_CARD_KINDS } from "../data/contract.js";
@@ -32,7 +33,8 @@ function reviewStepFor(item) {
   const rung = item.rung ?? 1;
   if (rung <= 1) return { kind: "choice" };
   if (rung === 2) return { kind: "type", mode: "meaning" };
-  return item.type === "vocab" ? { kind: "build" } : { kind: "type", mode: "produce" };
+  // Kana at rung 3+: write from memory (free trace). Vocab: build tiles.
+  return item.type === "kana" ? { kind: "trace" } : { kind: "build" };
 }
 
 // The recall (check2) card for an item in its learning steps: type the meaning
@@ -188,6 +190,8 @@ export default function Lesson() {
         <ChoiceCard key={`r${reviewIdx}`} item={item} allItems={items} onGraded={onGraded} />
       ) : step.kind === "type" ? (
         <TypeCard key={`r${reviewIdx}`} item={item} mode={step.mode} onGraded={onGraded} />
+      ) : step.kind === "trace" ? (
+        <TraceCard key={`r${reviewIdx}`} item={item} mode="free" onGraded={onGraded} />
       ) : (
         <BuildCard key={`r${reviewIdx}`} item={item} onGraded={onGraded} />
       );
@@ -203,6 +207,10 @@ export default function Lesson() {
       assertLiveKind("choice");
       label = "Practice";
       body = <ChoiceCard key={k} item={item} allItems={items} onGraded={onCheck} />;
+    } else if (item.type === "kana") {
+      assertLiveKind("trace");
+      label = "Practice";
+      body = <TraceCard key={k} item={item} mode="guided" onGraded={onCheck} />;
     } else {
       const mode = recallMode(item);
       assertLiveKind(`type:${mode}`);

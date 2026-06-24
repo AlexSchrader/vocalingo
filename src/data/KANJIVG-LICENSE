@@ -1,0 +1,39 @@
+KanjiVG Stroke Data — Attribution and License
+==============================================
+
+The stroke path data in src/data/kanjivg.js is derived from KanjiVG
+(https://kanjivg.tagaini.net), copyright (c) 2009-2023 Ulrich Apel.
+
+Licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License
+(CC BY-SA 3.0). Full legal code: https://creativecommons.org/licenses/by-sa/3.0/legalcode
+
+---
+
+HUMAN-READABLE SUMMARY (not a substitute for the license)
+
+You are free to:
+  Share  — copy and redistribute the material in any medium or format
+  Adapt  — remix, transform, and build upon the material for any purpose,
+            even commercially
+
+Under the following terms:
+  Attribution  — You must give appropriate credit to the original author
+                 (Ulrich Apel / KanjiVG), provide a link to the license,
+                 and indicate if changes were made. You may do so in any
+                 reasonable manner, but not in any way that suggests the
+                 licensor endorses you or your use.
+  ShareAlike   — If you remix, transform, or build upon the material, you
+                 must distribute your contributions under the same license
+                 (CC BY-SA 3.0) as the original.
+
+No additional restrictions — you may not apply legal terms or technological
+measures that legally restrict others from doing anything the license permits.
+
+---
+
+WHAT THIS PROJECT USES
+
+A subset of KanjiVG stroke paths covering the 46 base hiragana taught in
+Lingua's Japanese Unit 1 track. Paths are stored verbatim in KanjiVG's native
+109x109 SVG coordinate space. No modifications to the path geometry were made;
+only the subset selection differs from the full KanjiVG dataset.
