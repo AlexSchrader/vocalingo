@@ -27,3 +27,25 @@ export function nextRung(item, grade) {
 export function isReviewable(item) {
   return (item.rung ?? 0) >= 1;
 }
+
+// --- Mastery (per-item depth, 0..1) ----------------------------------------
+// Distinct from rung (the qualitative stage: recognize → recall → produce …).
+// Mastery is QUANTITATIVE depth: how well-retained the item is, driven by FSRS
+// `stability` (days of expected retention). Stability grows with each successful
+// spaced review and is the real "you've mastered it = you'll still remember it
+// weeks later" signal — better than a raw review count, which cramming inflates.
+// Reachable with the cards we have today (no speaking required): just keep
+// reviewing successfully and stability climbs.
+//
+// MASTERY_FULL_DAYS is the tuning knob: stability (in days) at which an item is
+// considered fully mastered. Lower = easier to "master"; higher = stricter.
+export const MASTERY_FULL_DAYS = 45;
+
+export function masteryPct(item) {
+  const stability = Number(item?.srs?.stability) || 0;
+  return Math.max(0, Math.min(1, stability / MASTERY_FULL_DAYS));
+}
+
+export function isMastered(item) {
+  return masteryPct(item) >= 1;
+}
