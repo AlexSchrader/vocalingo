@@ -26,7 +26,7 @@ This file is updated as part of the PR that completes work. When a task is finis
 ## Status at a glance
 
 - **Shipped to `main`:** Phase 4 (trace card, 46-kana) + Unit 2 — PRs #19/#20 (2026-06-23). Phase 4.5 session structure (review/lesson split, teach-order, trace polish) — PR #21 merged 2026-06-24. Full hiragana あ-ん is live.
-- **In flight:** Phase 3 real audio (`feat/lesson-audio`) — eleven_v3 TTS clips for all 101 items replace the Web Speech robot in lessons; cards play mp3 with Web Speech fallback. CI-tested, merging autonomously (Alex pre-authorized).
+- **Shipped to `main` (2026-06-25):** Phase 3 real audio (PR #22) — eleven_v3 TTS clips for all 101 items replace the Web Speech robot in lessons; cards play mp3 with Web Speech fallback. Robot voice is gone from lessons.
 - **Haruki agent (6.5):** configured + pronunciation validated by ear (agent `agent_0301kt9…`, Haiku 4.5). Backend wiring still to build.
 - **Queued (no backend):** Phase 4.6 Ladder full-climb view (`BUILD-BRIEF-ladder-display.md`); Unit 3 dakuten curriculum.
 - **⚡️ Single next action (Alex):** feel-check the real lesson audio on `main` (kana should be Haruki's voice, not robot) → pick next: Ladder, Unit 3, or Phase 6.5 backend.
@@ -110,7 +110,7 @@ The make-or-break thread. Units 1–2 (46 base hiragana, あ-ん) shipped and Al
 Real per-item pronunciation clips (ElevenLabs Haruki voice), with Web Speech as last-resort fallback.
 
 - [x] Switch TeachCard to Web Speech API — autoplay on reveal, replay button — DONE 2026-06-23, PR #19 (CC). Superseded as primary by the clip pipeline below; Web Speech is now only the fallback.
-- [~] Real lesson-audio clips — `generate-audio.mjs` rewritten to **`eleven_v3` + bare call** (no language_code, no katakana, no custom voice_settings), iterates all units; 101 clips generated to `public/audio/ja/`. Shared `useItemAudio` hook (TeachCard + TraceCard) plays the mp3, falls back to Web Speech if missing — STARTED 2026-06-25, `feat/lesson-audio` (CC). *Key finding: the old robot voice on isolated kana was caused by over-loaded TTS params, NOT a TTS limitation. `eleven_v3` bare call pronounces single kana correctly (Alex confirmed by ear). See gotchas.*
+- [x] Real lesson-audio clips — `generate-audio.mjs` rewritten to **`eleven_v3` + bare call** (no language_code, no katakana, no custom voice_settings), iterates all units; 101 clips generated to `public/audio/ja/`. Shared `useItemAudio` hook (TeachCard + TraceCard) plays the mp3, falls back to Web Speech if missing — DONE 2026-06-25, PR #22 (CC). *Key finding: the old robot voice on isolated kana was caused by over-loaded TTS params, NOT a TTS limitation. `eleven_v3` bare call pronounces single kana correctly (Alex confirmed by ear). See gotchas.*
 - [ ] Standing step when a unit ships: run `npm run generate:audio` (new items only; `--force` to regenerate all). (CC)
 
 ---
