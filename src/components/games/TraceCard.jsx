@@ -4,6 +4,7 @@ import { sfxCorrect, sfxWrong } from "../../store/sfx.js";
 import { KANJIVG } from "../../data/kanjivg.js";
 
 const KVG_SIZE = 109; // fixed by KanjiVG spec — not a tuning knob
+const TRACE_MAX = 380; // cap on the trace pad's px size so the glyph stays a readable size, not full-screen
 // Skip stroke animations in Playwright/WebDriver so CI smoke tests finish quickly.
 const IS_WEBDRIVER = typeof navigator !== "undefined" && !!navigator.webdriver;
 
@@ -409,15 +410,17 @@ export default function TraceCard({ item, mode = "guided", onGraded }) {
         <span style={{ fontSize: 12, color: C.inkSoft }}>{hint}</span>
       </div>
 
-      {/* Centering wrapper fills the remaining space; the square inside is sized
-          to the SMALLER of available width/height so it never overflows (no scroll)
-          on wide screens. height:100% + aspectRatio + maxWidth:100% = fit-square. */}
+      {/* Centering wrapper fills the remaining space; the square inside fits the
+          SMALLER of available width/height (never overflows → no scroll) AND caps
+          at TRACE_MAX so it doesn't balloon to fill a tall/wide screen — keeps the
+          glyph at a readable size with comfortable margins. */}
       <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div
         style={{
           height: "100%",
           aspectRatio: "1 / 1",
-          maxWidth: "100%",
+          maxWidth: `min(100%, ${TRACE_MAX}px)`,
+          maxHeight: `${TRACE_MAX}px`,
           position: "relative",
           background: C.surface,
           border: `2px solid ${
