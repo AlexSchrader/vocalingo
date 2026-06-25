@@ -89,9 +89,11 @@ function ActiveLanguage({ lang, items }) {
       </div>
 
       {/* CEFR rungs (goal at top) on the left; Lingua stands big at the bottom
-          rung — right by "A1 · you're here" — filling the space. */}
-      <div style={{ marginTop: 14, display: "flex", gap: 8, alignItems: "stretch" }}>
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+          rung — right by "A1 · you're here". The mascot is ADAPTIVE: clamp()
+          scales it with viewport width (no fixed px), and the rung block centers
+          vertically so it stays tidy as the mascot grows the row. */}
+      <div style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "stretch" }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           {[...rungs].reverse().map((rung, i, arr) => {
             const done = CEFR_IDX[rung] <= levelIdx;
             const current = rung === currentRung;
@@ -114,7 +116,7 @@ function ActiveLanguage({ lang, items }) {
             src="/lingua-proud.png"
             alt=""
             aria-hidden
-            style={{ maxHeight: "100%", width: "auto", maxWidth: 150, objectFit: "contain", objectPosition: "bottom" }}
+            style={{ width: "clamp(120px, 30vw, 220px)", height: "auto", objectFit: "contain", objectPosition: "bottom" }}
           />
         </div>
       </div>
