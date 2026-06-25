@@ -1,13 +1,21 @@
 #!/usr/bin/env node
 /**
- * Generate MP3 pronunciation clips for every item in Unit 1.
+ * Generate MP3 pronunciation clips for every item across all units.
  *
  * Usage:
- *   npm run generate:audio
+ *   npm run generate:audio          # generate any missing clips
+ *   npm run generate:audio -- --force   # regenerate everything
  *
  * Reads ELEVENLABS_API_KEY from .env.local or the environment.
- * Writes to: public/audio/ja/{item.id}.mp3
- * Re-running is safe — existing files are skipped.
+ * Writes to: public/audio/{lang}/{item.id}.mp3
+ *
+ * Voice: Haruki (server/companions.js). Model: eleven_v3.
+ *
+ * IMPORTANT — bare call only. Send the RAW character/word as text with just the
+ * model. Do NOT add language_code, do NOT convert kana→katakana, do NOT pass
+ * custom voice_settings. Those extras wreck isolated-kana pronunciation (rounds
+ * #15–#18 chased that dead end). eleven_v3 + a plain call pronounces single kana
+ * and words correctly with the voice's own defaults.
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
@@ -16,6 +24,7 @@ import { fileURLToPath } from "node:url";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, "..");
+const FORCE = process.argv.includes("--force");
 
 // Load .env.local into process.env (Vite reads it automatically; Node scripts don't)
 try {
@@ -36,65 +45,57 @@ if (!API_KEY) {
 }
 
 const { COMPANIONS } = await import("../server/companions.js");
-const { UNIT1 } = await import("../src/data/ja/unit1.js");
+const { UNITS } = await import("../src/data/index.js");
 
-const VOICE_ID = COMPANIONS.ja.voiceId;
-const OUT_DIR = join(ROOT, "public", "audio", "ja");
-mkdirSync(OUT_DIR, { recursive: true });
+const MODEL_ID = "eleven_v3";
 
-const items = UNIT1.lessons
-  .filter((l) => Array.isArray(l.items))
-  .flatMap((l) => l.items);
+// Flatten every playable item across all units, stamping its language.
+const items = UNITS.flatMap((unit) =>
+  unit.lessons
+    .filter((l) => Array.isArray(l.items))
+    .flatMap((l) => l.items.map((it) => ({ ...it, lang: unit.lang })))
+);
 
-console.log(`Generating audio for ${items.length} items  voice: ${VOICE_ID}\n`);
+console.log(`Generating audio for ${items.length} items  model: ${MODEL_ID}\n`);
 
 let done = 0, skipped = 0, errors = 0;
 
 for (let i = 0; i < items.length; i++) {
   const item = items[i];
-  const out = join(OUT_DIR, `${item.id}.mp3`);
-  const tag = `[${String(i + 1).padStart(2)}/${items.length}] ${item.id}`;
+  const voiceId = COMPANIONS[item.lang]?.voiceId;
+  if (!voiceId) {
+    console.error(`  ERROR  ${item.id}: no companion voice for lang "${item.lang}"`);
+    errors++;
+    continue;
+  }
 
-  // Kana items: convert hiragana → katakana before sending with language_code:"ja".
-  // Katakana is the phonetic script for isolated/foreign sounds — Haruki reads
-  // ア, カ, ノ as clean phonemes without word-completing them.
-  // Hiragana alone (あ, か) gets completed into words ("asai", "da").
-  // Romaji gets Japanese-English accent ("oo"→"oh", "e"→"ay") because Haruki
-  // is a Japanese voice. Katakana + language_code:"ja" is the correct fix.
-  // Vocab items send hiragana/kanji text as-is — multi-char words are fine.
-  const toKatakana = (s) => s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
-  const text = item.type === "kana" ? toKatakana(item.front) : item.front;
+  const outDir = join(ROOT, "public", "audio", item.lang);
+  mkdirSync(outDir, { recursive: true });
+  const out = join(outDir, `${item.id}.mp3`);
+  const tag = `[${String(i + 1).padStart(3)}/${items.length}] ${item.id}`;
 
-  if (existsSync(out)) {
-    console.log(`  skip   ${tag}`);
+  if (existsSync(out) && !FORCE) {
     skipped++;
     continue;
   }
 
+  // Bare call: raw text + model only. No language_code, no katakana, no voice_settings.
+  const text = item.front;
+
   try {
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: "POST",
       headers: {
         "xi-api-key": API_KEY,
         "Content-Type": "application/json",
         Accept: "audio/mpeg",
       },
-      body: JSON.stringify({
-        text,
-        model_id: "eleven_multilingual_v2",
-        language_code: "ja",
-        voice_settings: {
-          stability: 0.35,
-          similarity_boost: 0.80,
-          style: 0.25,
-          use_speaker_boost: true,
-        },
-      }),
+      body: JSON.stringify({ text, model_id: MODEL_ID }),
     });
 
     if (!res.ok) {
       const msg = await res.text();
-      console.error(`  ERROR  ${tag}: ${res.status} ${msg.slice(0, 120)}`);
+      console.error(`  ERROR  ${tag}: ${res.status} ${msg.slice(0, 140)}`);
       errors++;
       continue;
     }

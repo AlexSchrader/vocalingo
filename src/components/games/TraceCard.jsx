@@ -3,6 +3,7 @@ import { Volume2 } from "lucide-react";
 import { C, F } from "../../theme.js";
 import { sfxCorrect, sfxWrong } from "../../store/sfx.js";
 import { KANJIVG } from "../../data/kanjivg.js";
+import { useItemAudio } from "../../store/itemAudio.js";
 
 const KVG_SIZE = 109; // fixed by KanjiVG spec — not a tuning knob
 const TRACE_MAX = 380; // cap on the trace pad's px size so the glyph stays a readable size, not full-screen
@@ -77,25 +78,6 @@ function drawLine(ctx, pts, color, width) {
   ctx.restore();
 }
 
-// Speak the kana so the learner knows what they're tracing (sound ↔ shape).
-// Same Web Speech path as TeachCard. Skipped under WebDriver to keep CI fast/clean.
-function useKanaVoice(text) {
-  const [active, setActive] = useState(false);
-  function play() {
-    if (IS_WEBDRIVER) return;
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ja-JP";
-    u.rate = 0.8;
-    u.onstart = () => setActive(true);
-    u.onend = () => setActive(false);
-    u.onerror = () => setActive(false);
-    window.speechSynthesis.speak(u);
-  }
-  return { play, active };
-}
-
 // ---
 
 // mode: "guided" → animated guide then trace; "free" → draw from memory with snap
@@ -116,10 +98,9 @@ export default function TraceCard({ item, mode = "guided", onGraded }) {
   const [feedback, setFeedback] = useState(null); // null|"correct"|"wrong"
   const [misses, setMisses] = useState(0);
 
-  const { play: playVoice, active: voiceActive } = useKanaVoice(item.front);
-  // Hear the kana up front so the learner knows what they're tracing.
-  useEffect(() => { playVoice(); }, [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => () => { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); }, []);
+  // Hear the kana (real clip, Web Speech fallback) so the learner knows what
+  // they're tracing. The hook auto-plays on mount/item change.
+  const { play: playVoice, active: voiceActive } = useItemAudio(item);
 
   // --- canvas helpers ---
 
