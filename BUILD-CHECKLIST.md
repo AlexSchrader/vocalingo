@@ -25,13 +25,13 @@ This file is updated as part of the PR that completes work. When a task is finis
 
 ## Status at a glance
 
-- **Shipped to `main`:** Phase 3 (Web Speech audio) + Phase 4 (trace card, 46-kana) — PR #19 merged 2026-06-23. Unit 2 — PR #20 merged 2026-06-23 (Alex-reviewed). Full hiragana あ-ん is live.
-- **In flight:** Phase 4.5 session structure (`feat/session-structure`, PR #21) — review/lesson split, teach-order fix, trace size fixes. Awaiting CI + Alex feel-check.
+- **Shipped to `main`:** Phase 4 (trace card, 46-kana) + Unit 2 — PRs #19/#20 (2026-06-23). Phase 4.5 session structure (review/lesson split, teach-order, trace polish) — PR #21 merged 2026-06-24. Full hiragana あ-ん is live.
+- **In flight:** Phase 3 real audio (`feat/lesson-audio`) — eleven_v3 TTS clips for all 101 items replace the Web Speech robot in lessons; cards play mp3 with Web Speech fallback. CI-tested, merging autonomously (Alex pre-authorized).
+- **Haruki agent (6.5):** configured + pronunciation validated by ear (agent `agent_0301kt9…`, Haiku 4.5). Backend wiring still to build.
 - **Queued (no backend):** Phase 4.6 Ladder full-climb view (`BUILD-BRIEF-ladder-display.md`); Unit 3 dakuten curriculum.
-- **Resequenced:** Phase 6.5 (`BUILD-BRIEF-agent-audio.md`) **pulls the backend forward** — the only pipeline that pronounced Japanese correctly is an ElevenLabs Conversational Agent + Claude LLM, not raw TTS. Alex can configure the agent in the ElevenLabs dashboard now, in parallel (unblocks the rest).
-- **⚡️ Single next action (Alex):** feel-check PR #21 on device (review-first flow + trace size) → merge → pick next (Ladder, Unit 3, or kick off the Haruki agent by configuring it in the ElevenLabs dashboard).
+- **⚡️ Single next action (Alex):** feel-check the real lesson audio on `main` (kana should be Haruki's voice, not robot) → pick next: Ladder, Unit 3, or Phase 6.5 backend.
 - **Phase numbers = dependency map, not a queue.** Curriculum runs as the default thread between every feature sprint. Onboarding (Phase 5), the Ladder screen (4.6), and the Haruki agent (6.5) slot in as their dependencies clear.
-- **Last updated:** 2026-06-24
+- **Last updated:** 2026-06-25
 
 ---
 
@@ -107,9 +107,11 @@ The make-or-break thread. Units 1–2 (46 base hiragana, あ-ん) shipped and Al
 
 ## Phase 3 — Brief B — Audio out (no backend)
 
-Web Speech API (window.speechSynthesis, lang:"ja-JP") replaces ElevenLabs MP3 pipeline. Ships with Phase 4.
+Real per-item pronunciation clips (ElevenLabs Haruki voice), with Web Speech as last-resort fallback.
 
-- [x] Switch TeachCard to Web Speech API — no files, no staleness, autoplay on reveal, replay button — DONE 2026-06-23, PR #19 (CC). *Web Speech is quiet + English-accented — it's the FALLBACK, not the answer. The real fix is architectural: see **Phase 6.5** (`BUILD-BRIEF-agent-audio.md`) — the old app's correct pronunciation came from an ElevenLabs Conversational Agent + Claude LLM, not raw TTS. Capture that agent's config, apply it to the clip generator.*
+- [x] Switch TeachCard to Web Speech API — autoplay on reveal, replay button — DONE 2026-06-23, PR #19 (CC). Superseded as primary by the clip pipeline below; Web Speech is now only the fallback.
+- [~] Real lesson-audio clips — `generate-audio.mjs` rewritten to **`eleven_v3` + bare call** (no language_code, no katakana, no custom voice_settings), iterates all units; 101 clips generated to `public/audio/ja/`. Shared `useItemAudio` hook (TeachCard + TraceCard) plays the mp3, falls back to Web Speech if missing — STARTED 2026-06-25, `feat/lesson-audio` (CC). *Key finding: the old robot voice on isolated kana was caused by over-loaded TTS params, NOT a TTS limitation. `eleven_v3` bare call pronounces single kana correctly (Alex confirmed by ear). See gotchas.*
+- [ ] Standing step when a unit ships: run `npm run generate:audio` (new items only; `--force` to regenerate all). (CC)
 
 ---
 
@@ -130,10 +132,11 @@ Real stroke-order tracing; completes the "produce/write" half of the mastery lad
 
 Reviews and lessons are now **separate sessions**, per Alex's pedagogy call: review is the mandatory daily habit (streak triggers on it), lesson is an optional bonus. First-teach respects authored kana→vocab order so you can't be quizzed on はな before は and な are taught; reviews still interleave (good for retention).
 
-- [~] Split `/review` and `/lesson` into separate routes + runners; Today CTA routes reviews-first, lesson when clear — STARTED 2026-06-24, PR #21 (CC)
-- [~] Teach-order fix — `buildLearnQueue` front-loads all teaches in authored order (kana before vocab); checks still interleave — STARTED 2026-06-24, PR #21 (CC)
-- [~] Daily goal — `rollDailyGoal` triggers streak on reviews cleared (lesson optional); fallback to lesson when nothing is due (new learner) — STARTED 2026-06-24, PR #21 (CC)
-- [~] TraceCard fit-to-viewport + 380px cap — square never overflows (no scroll), glyph stays a readable size — STARTED 2026-06-24, PR #21 (CC)
+- [x] Split `/review` and `/lesson` into separate routes + runners; Today CTA routes reviews-first, lesson when clear — DONE 2026-06-24, PR #21 (CC)
+- [x] Teach-order fix — `buildLearnQueue` front-loads all teaches in authored order (kana before vocab); checks still interleave — DONE 2026-06-24, PR #21 (CC)
+- [x] Daily goal — `rollDailyGoal` triggers streak on reviews cleared (lesson optional); fallback to lesson when nothing is due (new learner) — DONE 2026-06-24, PR #21 (CC)
+- [x] TraceCard fit-to-viewport + 380px cap — square never overflows (no scroll), glyph stays a readable size — DONE 2026-06-24, PR #21 (CC)
+- [x] TraceCard voice + romaji label + Continue gate — header shows the reading + speaker button, kana spoken on mount/completion, no auto-advance (taps Continue) — DONE 2026-06-24, PR #21 (CC)
 - [ ] Alex `?dev` feel-check — review-first flow, teach-order (all kana before vocab), trace size on real device; scroll-test each card kind (teach/choice/type/build) at actual screen size (Alex)
 
 ---
@@ -261,4 +264,5 @@ Claude brain + ElevenLabs voice, multi-tutor from `companions.js`. The two-bank 
 - **The repo is the source of truth, not memory.** Reasoning about code shapes from memory is unreliable; read the actual file before changing or diagnosing it. (This rule has bitten more than once.)
 - **Fix-script anchors must include the full closing `}`** of the target object. Anchoring on a partial field or a string that also appears mid-object will embed the fix in the wrong place.
 - **Curriculum correctness is not schema-correctness.** `validate:content` catches structure, not natural Japanese. Verb collocations, particle usage, register, and concept-sequencing require an authoring eye. Every new unit needs Alex's line-by-line review before merge — not just CI green.
-- **ElevenLabs MP3 pipeline abandoned** — stale files caused pronunciation regressions (PR #18 fixed katakana, but cached MP3s pre-dated the fix and played wrong). Replaced with `window.speechSynthesis` (lang:"ja-JP") in PR #19. No audio files needed; no regeneration step.
+- **ElevenLabs MP3 pipeline abandoned then REVIVED** — was abandoned for Web Speech in PR #19 after rounds #15–#18 couldn't get isolated kana to pronounce right. **Root cause found 2026-06-24:** it was never a TTS limitation — it was over-loaded request params (`language_code:"ja"` + hiragana→katakana conversion + aggressive `voice_settings` stability 0.35/style 0.25 + `eleven_multilingual_v2`). A **bare `eleven_v3` call** (just `{text, model_id}`, raw character, voice defaults) pronounces single kana correctly. Confirmed by ear across multilingual/flash/turbo (all bad) vs v3 (good). The clip pipeline is back as the primary; Web Speech is now only the fallback. **Don't add language_code / katakana / custom voice_settings to the generator — that's what broke it.**
+- **The conversational agent sounded good because of CONTEXT, not config.** Haruki's agent ([`BUILD-BRIEF-agent-audio.md`]) pronounces well because Claude feeds it full sentences. This briefly led to the wrong conclusion that lesson clips needed the agent or recorded human audio — they don't; bare `eleven_v3` handles isolated kana. The agent is still the right tool for live conversation, just not the only path to good clip audio.

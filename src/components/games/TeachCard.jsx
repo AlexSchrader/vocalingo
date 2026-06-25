@@ -1,30 +1,10 @@
-import { useEffect, useState } from "react";
 import { Volume2 } from "lucide-react";
 import { C, F } from "../../theme.js";
 import { sfxClick } from "../../store/sfx.js";
-
-function useItemAudio(text) {
-  const [active, setActive] = useState(false);
-
-  function play() {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ja-JP";
-    u.rate = 0.85;
-    u.onstart = () => setActive(true);
-    u.onend = () => setActive(false);
-    u.onerror = () => setActive(false);
-    window.speechSynthesis.speak(u);
-  }
-
-  useEffect(() => { play(); }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => () => { window.speechSynthesis.cancel(); }, []);
-
-  return { play, active };
-}
+import { useItemAudio } from "../../store/itemAudio.js";
 
 export default function TeachCard({ item, onAdvance }) {
-  const { play, active } = useItemAudio(item.front);
+  const { play, active } = useItemAudio(item);
   const isKana = item.type === "kana";
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 16 }}>
