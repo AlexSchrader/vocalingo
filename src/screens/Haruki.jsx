@@ -108,14 +108,14 @@ function HarukiChat() {
   const empty = messages.length === 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, padding: 16 }}>
       <div style={{ marginBottom: 12, flexShrink: 0 }}>
         <div style={{ fontFamily: F.disp, fontSize: 22, fontWeight: 700 }}>Haruki</div>
         <div style={{ fontSize: 13, color: C.inkSoft }}>Type or talk — it's all one conversation.</div>
       </div>
 
-      {/* Transcript (or warm empty state) */}
-      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "4px 0" }}>
+      {/* Transcript (or warm empty state) — scrolls; input stays pinned below. */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "4px 0" }}>
         {empty ? (
           <div style={{ margin: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", color: C.inkSoft }}>
             <img src="/lingua-wave.png" alt="" aria-hidden style={{ width: "clamp(120px, 32vw, 180px)", height: "auto", objectFit: "contain" }} />
