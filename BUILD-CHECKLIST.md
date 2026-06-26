@@ -28,9 +28,9 @@ This file is updated as part of the PR that completes work. When a task is finis
 
 - **Shipped to `main`:** Phase 4 (trace card, 46-kana) + Unit 2 — PRs #19/#20 (2026-06-23). Phase 4.5 session structure (review/lesson split, teach-order, trace polish) — PR #21 merged 2026-06-24. Full hiragana あ-ん is live.
 - **Shipped to `main` (2026-06-25):** Phase 3 real audio (PR #22) · Stats SEEN→NEW (PR #23) · PWA auto-update fix (PR #25, no stale builds after deploy) · **Ladder full-climb view (PR #24)** + bigger adaptive mascot & full-width progress (PR #27) · **Today warm-up/polish (PR #26)** — greeting, stat icons, adaptive mascot banner, fixed Up Next, hiragana strip.
-- **Haruki agent (6.5):** configured + pronunciation validated by ear (agent `agent_0301kt9…`, Haiku 4.5). Backend wiring still to build.
-- **Queued (no backend):** Unit 3 dakuten curriculum; mastery-feel tuning (Alex review); mascot per-language costumes; mini-games (Future section).
-- **⚡️ Next build thread:** **Unit 3 (dakuten curriculum)** or **Phase 6.5 (Haruki agent backend)**. Mastery-feel tuning + voice naturalness are smaller follow-ups.
+- **Haruki LIVE (Phase 6.5 shipped, PR #29):** the Haruki tab is a real text+voice tutor — ElevenLabs Conversational Agent (Claude Haiku 4.5 + native-JP voice), serverless signed-URL auth (key server-side), unified chat. Also: desktop centered-column layout (PR #28).
+- **Queued:** **Unit 3 dakuten curriculum (next)**; capture agent voice settings → tune lesson clips; mastery-feel tuning; mascot costumes; mini-games (Future).
+- **⚡️ Next build thread:** **Unit 3 (dakuten curriculum)** — が/ざ/だ/ば/ぱ + handakuten. Needs a brief/content then Alex line-by-line review.
 - **Phase numbers = dependency map, not a queue.** Curriculum runs as the default thread between every feature sprint. Onboarding (Phase 5), the Ladder screen (4.6), and the Haruki agent (6.5) slot in as their dependencies clear.
 - **Last updated:** 2026-06-25
 
@@ -181,9 +181,9 @@ Front-door UX and the user profile data shape. Frontend-only — no backend requ
 
 Serverless infra. Required for graded speaking and real Haruki. **No longer staged last** — Phase 6.5 (the agent-audio brief) pulls it forward, because the only voice pipeline that ever pronounced Japanese correctly runs through the backend. API keys are env secrets, never frontend.
 
-- [ ] Serverless setup (Vercel functions / edge) (CC)
-- [ ] `/api/speak.js` edge function for per-character TTS (CC)
-- [ ] Secret/env handling for ElevenLabs + Claude keys (CC)
+- [x] Serverless setup (Vercel functions) — first fn `api/convai-session.js` (zero-config Vercel detects `/api`); ESM `export default handler(req,res)` — DONE 2026-06-25, PR #29 (CC)
+- [x] Secret/env handling for ElevenLabs key — `ELEVENLABS_API_KEY` server-side only (Vercel env), never reaches the browser; client gets only an expiring signed URL — DONE 2026-06-25, PR #29 (CC). Claude key handled by the agent (ElevenLabs side), not ours.
+- [ ] `/api/speak.js` per-character TTS — not needed: lesson clips are pre-generated (`generate-audio.mjs`), conversation uses the live agent. Keep parked unless a real-time per-item TTS need appears. (CC)
 
 ---
 
@@ -193,8 +193,8 @@ Brief: `BUILD-BRIEF-agent-audio.md`. **The key realization:** the old app's Haru
 
 - [x] **Configure the Haruki agent in the ElevenLabs dashboard** — voice `YYufJjbyLSFHuWXzJAaG`, LLM = Claude Haiku 4.5, persona from `server/companions.js`, JP. Agent `agent_0301kt9sdhhaez59jdk1ba3xqzzn`. Pronunciation validated by ear. — DONE 2026-06-25 (Alex)
 - [x] **CC: verify against CURRENT ElevenLabs docs/SDK before implementing** — confirmed via installed `@elevenlabs/react` v1.9.0 types: `ConversationProvider` + `useConversation()` → `startSession({signedUrl})`, `status`/`isSpeaking`/`endSession`; `get-signed-url` endpoint returns `signed_url` (wss). — DONE 2026-06-25 (CC)
-- [~] Backend session-auth endpoint — `api/convai-session.js` (Vercel fn) mints the signed WebSocket URL from `get-signed-url`; `ELEVENLABS_API_KEY` stays server-side; reads `agentId` from `server/companions.js` — STARTED 2026-06-25, PR #29 (CC). *First serverless function in the repo → also kicks off Phase 6 backend foundation.*
-- [~] Frontend connection — `@elevenlabs/react` v1.9.0 (NEW dep, lazy-loaded so its ~500KiB stays out of the main bundle); Haruki tab is now a live voice call (mascot + status + transcript + mute/end) — STARTED 2026-06-25, PR #29 (CC). *Only works on Vercel (the `/api` fn isn't served by `vite dev/preview`).*
+- [x] Backend session-auth endpoint — `api/convai-session.js` (Vercel fn) mints the signed WebSocket URL from `get-signed-url`; `ELEVENLABS_API_KEY` stays server-side; reads `agentId` from `server/companions.js` — DONE 2026-06-25, PR #29 (CC). *First serverless function in the repo → also satisfies Phase 6 backend foundation. Gotcha: the Vercel env key must be the convai_write-scoped one + redeploy — a stale key → "ElevenLabs 401".*
+- [x] Frontend connection — `@elevenlabs/react` v1.9.0 (NEW dep, lazy-loaded so its ~500KiB stays out of the main bundle); Haruki tab is a **unified text + voice chat** (type or call, one session/transcript, messaging-app layout) — DONE 2026-06-25, PR #29 (CC), Alex-confirmed live. *Only works on Vercel (the `/api` fn isn't served by `vite dev/preview`).*
 - [ ] **Capture + document the agent's working speech config** (voice settings) once Alex confirms it sounds right live — source of truth for tuning lesson clips. (Alex/CC)
 - [ ] Apply the captured agent config to the per-item clip generator (`generate-audio.mjs`) if it improves on bare `eleven_v3`. (CC)
 
