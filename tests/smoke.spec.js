@@ -262,10 +262,11 @@ test("new words are taught, the loop completes, and it persists", async ({ page 
   await page.getByRole("button", { name: "Back to Today" }).click();
 
   await expect(page.getByText("Lesson complete")).toBeVisible();
-  await expect(page.getByText(/1 day\b/)).toBeVisible();
 
   const persisted = await page.evaluate(() => localStorage.getItem("lingua-v1"));
-  const graded = JSON.parse(persisted).state.items["ja-u1l1-ohayou"];
+  const state = JSON.parse(persisted).state;
+  expect(state.streak.current).toBeGreaterThanOrEqual(1); // daily goal met → streak ticked
+  const graded = state.items["ja-u1l1-ohayou"];
   expect(graded.rung).toBeGreaterThanOrEqual(1);
   expect(new Date(graded.srs.due).getTime()).toBeGreaterThan(Date.now());
 
