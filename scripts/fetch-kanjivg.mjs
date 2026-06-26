@@ -14,9 +14,12 @@ import { fileURLToPath } from "node:url";
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, "..");
 
-// All 46 base hiragana — fixed script, doesn't change with curriculum additions.
-// Add dakuten/handakuten/combination characters here when those units ship.
-const kanaChars = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん".split("");
+// Kana that need stroke data — every kana item in the curriculum must have an
+// entry (the content contract hard-errors otherwise). Grows as units ship.
+//   base 46 hiragana (Units 1-2) + 25 dakuten/handakuten (Unit 3).
+const HIRAGANA = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん";
+const DAKUTEN = "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ";
+const kanaChars = (HIRAGANA + DAKUTEN).split("");
 
 console.log(`Fetching KanjiVG data for ${kanaChars.length} kana: ${kanaChars.join(" ")}\n`);
 
