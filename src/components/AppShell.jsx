@@ -97,7 +97,9 @@ export default function AppShell() {
       </header>
 
       <main style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
-        <div style={{ maxWidth: MAXW, margin: "0 auto", minHeight: "100%" }}>
+        {/* Centered column. Flex so screens that fill the height (e.g. the chat,
+            with a pinned input) work, while scrolling screens still grow. */}
+        <div style={{ maxWidth: MAXW, width: "100%", margin: "0 auto", minHeight: "100%", display: "flex", flexDirection: "column" }}>
           <Outlet />
         </div>
       </main>

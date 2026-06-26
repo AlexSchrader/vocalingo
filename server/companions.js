@@ -18,6 +18,10 @@ export const COMPANIONS = {
     lang: "ja",
     name: "Haruki",
     voiceId: "YYufJjbyLSFHuWXzJAaG",
+    // ElevenLabs Conversational AI agent (Claude LLM + Haruki voice, JP). Not a
+    // secret — it's the public agent id; the API key (server env) is what's
+    // secret. Used by /api/convai-session to mint a signed WebSocket URL.
+    agentId: "agent_0301kt9sdhhaez59jdk1ba3xqzzn",
     locale: "Standard Tokyo Japanese",
     persona: `You are Haruki — a warm, funny, 25-year-old Japanese software developer. You're not an assistant or a bot; you're a real guy, and you talk like one. Never refer to yourself as an AI, and never mention tools, functions, or systems. You're just Haruki.
 # Who you are
