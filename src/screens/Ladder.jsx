@@ -75,6 +75,8 @@ function ActiveLanguage({ lang, items }) {
   const rungs = CEFR_LEVELS.filter((r) => CEFR_IDX[r] <= targetIdx);
   // Current rung = first not-yet-completed level.
   const currentRung = rungs.find((r) => CEFR_IDX[r] > levelIdx) ?? lang.target;
+  // Progress on the current level (only A1 has content today).
+  const currentPct = currentRung === "A1" ? a1PercentFor(lang.id, items) : null;
 
   return (
     <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 18, padding: 16 }}>
@@ -86,38 +88,54 @@ function ActiveLanguage({ lang, items }) {
             {lang.level === "pre-A1" ? "Starting out" : lang.level} → {lang.target} goal
           </div>
         </div>
-        <img
-          src="/lingua-proud.png"
-          alt=""
-          aria-hidden
-          style={{ width: 56, height: 56, objectFit: "contain", marginTop: -6, marginBottom: -6 }}
-        />
       </div>
 
-      {/* CEFR rungs, goal at the top — the literal ladder. */}
-      <div style={{ marginTop: 14, display: "flex", flexDirection: "column" }}>
-        {[...rungs].reverse().map((rung, i, arr) => {
-          const done = CEFR_IDX[rung] <= levelIdx;
-          const current = rung === currentRung;
-          const pct = current && rung === "A1" ? a1PercentFor(lang.id, items) : null;
-          return (
+      {/* CEFR rungs (goal at top) on the left; Lingua stands big on the right.
+          The mascot is ADAPTIVE: clamp() scales it with viewport width (no fixed
+          px), and the rung block centers vertically so it stays tidy. The
+          current-level progress bar lives full-width BELOW, under the mascot. */}
+      <div style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "stretch" }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          {[...rungs].reverse().map((rung, i, arr) => (
             <CefrRung
               key={rung}
               level={rung}
-              done={done}
-              current={current}
-              pct={pct}
+              done={CEFR_IDX[rung] <= levelIdx}
+              current={rung === currentRung}
               first={i === 0}
               last={i === arr.length - 1}
             />
-          );
-        })}
+          ))}
+        </div>
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "flex-end" }}>
+          <img
+            src="/lingua-proud.png"
+            alt=""
+            aria-hidden
+            style={{ width: "clamp(120px, 30vw, 220px)", height: "auto", objectFit: "contain", objectPosition: "bottom" }}
+          />
+        </div>
       </div>
+
+      {/* Current-level progress — full width, below the mascot. */}
+      {currentPct != null ? (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, marginBottom: 6 }}>
+            <span style={{ fontWeight: 700, color: C.ink }}>{currentRung} progress</span>
+            <span style={{ fontWeight: 700, color: C.ai }}>{currentPct}%</span>
+          </div>
+          <div style={{ height: 10, borderRadius: 999, background: C.lockedBg, overflow: "hidden" }}>
+            <div style={{ width: `${currentPct}%`, height: "100%", background: C.ai, transition: "width 250ms ease" }} />
+          </div>
+        </div>
+      ) : (
+        <div style={{ marginTop: 12, fontSize: 12, color: C.inkSoft }}>Lessons for {currentRung} coming soon.</div>
+      )}
     </div>
   );
 }
 
-function CefrRung({ level, done, current, pct, first, last }) {
+function CefrRung({ level, done, current, first, last }) {
   const color = done ? C.matcha : current ? C.ai : C.locked;
   return (
     <div style={{ display: "flex", gap: 12 }}>
@@ -137,23 +155,12 @@ function CefrRung({ level, done, current, pct, first, last }) {
         <div style={{ width: 2, flex: 1, background: last ? "transparent" : C.line }} />
       </div>
       {/* label + state */}
-      <div style={{ flex: 1, padding: "8px 0", minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontWeight: current ? 700 : 600, fontSize: 15, color: current || done ? C.ink : C.inkSoft }}>
-            {level}
-            {current && <span style={{ fontSize: 11, fontWeight: 600, color: C.ai, marginLeft: 8 }}>you're here</span>}
-          </span>
-          {done && <span style={{ fontSize: 11, fontWeight: 700, color: C.matcha }}>Done</span>}
-          {current && pct != null && <span style={{ fontSize: 12, fontWeight: 700, color: C.ai }}>{pct}%</span>}
-        </div>
-        {current && pct != null && (
-          <div style={{ height: 6, borderRadius: 999, background: C.lockedBg, overflow: "hidden", marginTop: 5 }}>
-            <div style={{ width: `${pct}%`, height: "100%", background: C.ai, transition: "width 250ms ease" }} />
-          </div>
-        )}
-        {current && pct == null && (
-          <div style={{ fontSize: 11, color: C.inkSoft, marginTop: 3 }}>Lessons coming soon</div>
-        )}
+      <div style={{ flex: 1, padding: "8px 0", minWidth: 0, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontWeight: current ? 700 : 600, fontSize: 15, color: current || done ? C.ink : C.inkSoft }}>
+          {level}
+          {current && <span style={{ fontSize: 11, fontWeight: 600, color: C.ai, marginLeft: 8 }}>you're here</span>}
+        </span>
+        {done && <span style={{ fontSize: 11, fontWeight: 700, color: C.matcha }}>Done</span>}
       </div>
     </div>
   );
