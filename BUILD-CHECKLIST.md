@@ -30,7 +30,7 @@ This file is updated as part of the PR that completes work. When a task is finis
 - **Shipped to `main` (2026-06-25):** Phase 3 real audio (PR #22) · Stats SEEN→NEW (PR #23) · PWA auto-update fix (PR #25, no stale builds after deploy) · **Ladder full-climb view (PR #24)** + bigger adaptive mascot & full-width progress (PR #27) · **Today warm-up/polish (PR #26)** — greeting, stat icons, adaptive mascot banner, fixed Up Next, hiragana strip.
 - **Haruki LIVE (Phase 6.5 shipped, PR #29):** the Haruki tab is a real text+voice tutor — ElevenLabs Conversational Agent (Claude Haiku 4.5 + native-JP voice), serverless signed-URL auth (key server-side), unified chat. Also: desktop centered-column layout (PR #28).
 - **Queued:** **Unit 3 dakuten curriculum (next)**; capture agent voice settings → tune lesson clips; mastery-feel tuning; mascot costumes; mini-games (Future).
-- **⚡️ Next build thread:** **Unit 3 (dakuten curriculum)** — が/ざ/だ/ば/ぱ + handakuten. Needs a brief/content then Alex line-by-line review.
+- **⚡️ Next build thread:** **Speech grading (Brief C / Phase 7)** — Alex's call: say-the-word → detect + grade → climb the SPOKEN rung. Design doc written (`BUILD-BRIEF-speech-grading.md`); decisions to lock before code. *Also still open:* Unit 3 (dakuten, PR #30) needs Alex's line-by-line review + merge — now easy to feel-check via the new Dev Mode.
 - **Phase numbers = dependency map, not a queue.** Curriculum runs as the default thread between every feature sprint. Onboarding (Phase 5), the Ladder screen (4.6), and the Haruki agent (6.5) slot in as their dependencies clear.
 - **Shipped to `main` (2026-06-27):** **Dev Mode** — hidden playtest panel in Settings (unlock `L071201`), launches any unit/lesson bypassing gating in a fully-isolated sandbox run (byte-identical real state before/after). PR #32. See Phase 4.7. Remaining: Alex device feel-check.
 - **Last updated:** 2026-06-27
@@ -222,12 +222,19 @@ Brief: `BUILD-BRIEF-agent-audio.md`. **The key realization:** the old app's Haru
 
 ---
 
-## Phase 7 — Brief C — Whisper speech grading
+## Phase 7 — Brief C — Speech grading (say-the-word → detect + grade)
 
-- [!] Serverless Whisper endpoint for speech accuracy — BLOCKED ON: Phase 6 (backend foundation) (CC)
-- [!] Wire `SpeakCard` into the runner (exists, unrouted) — BLOCKED ON: Phase 6 (CC)
-- [!] Add `speak` to `LIVE_CARD_KINDS`, un-skip its coverage stub, add fixture coverage — BLOCKED ON: Phase 6 (CC)
-- [!] SPOKEN rung climbs via graded speaking — BLOCKED ON: Phase 6 (CC)
+**Design doc:** `BUILD-BRIEF-speech-grading.md` (2026-06-27) — Alex named speech grading as the next big thread. Backend foundation is now partly unblocked (PR #29 shipped the first Vercel serverless fn + server-side ElevenLabs key), so this is no longer hard-blocked on Phase 6. **Brief recommends:** path A (transcript match) first via **ElevenLabs Scribe STT** (we already hold the key + serverless pattern; Japanese WER ≤5%), with a pluggable grader so Azure phoneme-scoring (path B, the only one returning per-phoneme Japanese accuracy) can drop in later. Graded path = discrete `SpeakCard` + scoring endpoint (structural), NOT the live conversation agent. ND-leniency is a hard constraint (no harsh mic fail; graceful fallback when no mic/network).
+
+- [ ] **Decisions to lock first** (see brief §"Open decisions"): path A vs B for v1 · provider (Scribe rec) · speakable scope (kana vs vocab vs both — single-kana STT least reliable, may argue vocab-first) · capture UX · realtime vs upload (upload rec). (Alex/Claude)
+- [ ] `/api/score-speech` serverless endpoint (mirrors `convai-session.js`, key server-side) — **de-risk isolated-word Japanese STT by ear/data before any UI** (same lesson as the TTS saga). (CC)
+- [ ] Real mic capture in `SpeakCard` (MediaRecorder) + wire into the review runner at rung 4 (exists today as a visual stub: `// TODO: real Whisper speech scoring`). (CC)
+- [ ] Grade mapping → FSRS — reuse `normalizeReading`/matching from `src/store/answer.js` (one notion of "correct reading", typed or spoken); clean→`good`, close→`hard`, miss→`again`; threshold as a tunable constant. (CC)
+- [ ] ND-friendly grading — lenient default, penalty-free retry, warm framing, graceful fallback to ungraded "say it" when mic/permission/endpoint unavailable. (CC)
+- [ ] Privacy/consent — mic-permission moment + "audio sent to vendor for scoring, not stored" note in Settings; confirm no clip persistence. (CC)
+- [ ] Add `speak` to `LIVE_CARD_KINDS`, un-skip its coverage stub (`tests/smoke.spec.js:318`), add a fixture (mock the endpoint — no real mic/network in CI). (CC)
+- [ ] SPOKEN rung (rung 4) climbs only via a graded spoken pass; confirm PRODUCED (rung 3) gates it. (CC)
+- [ ] **Check-in items before building** (CLAUDE.md guardrails): new dep (STT SDK/fetch), new backend endpoint + possible new vendor key, engine-touching → own scoped PR. Confirm `speak` needs no new `contract.js` field (likely none). (CC)
 
 ---
 
