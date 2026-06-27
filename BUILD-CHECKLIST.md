@@ -32,7 +32,8 @@ This file is updated as part of the PR that completes work. When a task is finis
 - **Queued:** **Unit 3 dakuten curriculum (next)**; capture agent voice settings → tune lesson clips; mastery-feel tuning; mascot costumes; mini-games (Future).
 - **⚡️ Next build thread:** **Unit 3 (dakuten curriculum)** — が/ざ/だ/ば/ぱ + handakuten. Needs a brief/content then Alex line-by-line review.
 - **Phase numbers = dependency map, not a queue.** Curriculum runs as the default thread between every feature sprint. Onboarding (Phase 5), the Ladder screen (4.6), and the Haruki agent (6.5) slot in as their dependencies clear.
-- **Last updated:** 2026-06-25
+- **In flight (PR open):** **Dev Mode** — hidden playtest panel in Settings (unlock `L071201`), launches any unit/lesson bypassing gating in a fully-isolated sandbox run (no writes to real state). See Phase 4.7. Branch `claude/dev-mode-playtest-panel`.
+- **Last updated:** 2026-06-27
 
 ---
 
@@ -160,6 +161,24 @@ Brief: `BUILD-BRIEF-ladder-display.md`. The app "looks blank" — the Ladder sho
 - [x] Mascot back on the Ladder — `lingua-proud` in the hero. Baked checkerboard stripped from all 8 `lingua-*` PNGs via `scripts/strip-mascot-bg.mjs` (edge flood-fill, removes checker + soft shadow, art preserved) — DONE 2026-06-25, PR #24 (CC)
 - [ ] **Ladder must grow with content (standing):** kana section auto-includes dakuten (same `type:"kana"`) when Unit 3 ships, but katakana likely wants its own grouping and **kanji needs a new section** (different type/UI). Units + roadmap sections grow from data. Re-check the Ladder reflects reality whenever a unit ships. (CC)
 - [ ] Mastery feel-check + tune — Alex does real reviews, judges whether bars fill too slow/fast; tune `MASTERY_FULL_DAYS` or swap the model. (Alex/CC)
+
+---
+
+## Phase 4.7 — Dev Mode (hidden playtest panel) `[claude/dev-mode-playtest-panel]`
+
+A solo-playtesting console hidden behind an unlock code in Settings. The point is to
+exercise any unit/lesson — including ones gated behind the ladder — without grinding to them,
+and **without ever touching real progress**. Isolation is the hard requirement: a dev run must
+leave the persisted store byte-identical.
+
+- [~] Unlock — Settings code field (`L071201`) flips a persisted `devMode` flag (survives reloads); "Disable Dev Mode" toggles it back off. Convenience, not security — code ships in the bundle, nothing sensitive gated. `unlockDevMode`/`disableDevMode` in `useStore.js`, `devMode` added to `partialize`. — STARTED 2026-06-27, PR #<tbd> (CC)
+- [~] Dev panel (`/dev`, visible only when unlocked) — lists every registered unit → its lessons from UNITS data (no hardcoded names), fluid layout. Tap any lesson to launch it directly, bypassing ladder/unlock gating. — STARTED 2026-06-27, PR #<tbd> (CC)
+- [~] Layout-state preview — launch a lesson as **Fresh** (teach flow) / **Mid-progress** / **Mastered** (review flow at the matching rung+stability), to check those card UIs without grinding. — STARTED 2026-06-27, PR #<tbd> (CC)
+- [~] Diagnostics readout (`devDiagnostics()` in `src/store/dev.js`) — units registered, lessons, item counts, total kana **with vs without KanjiVG stroke data** (flags any missing). The "is the new unit wired right" check. — STARTED 2026-06-27, PR #<tbd> (CC)
+- [~] "Reset my real progress" (confirm-gated) — wipes progress via `resetAll`; leaves Dev Mode unlocked. — STARTED 2026-06-27, PR #<tbd> (CC)
+- [~] **Fully isolated runs (critical)** — explicit `sandbox` flag the Lesson **and** Review runners respect (`?sandbox=1`): throwaway in-memory items (`buildSandboxItems`) + every store writer swapped for a no-op (`runnerWriters`). No FSRS/mastery/streak/XP/persistence writes. — STARTED 2026-06-27, PR #<tbd> (CC)
+- [~] Test — `tests/unit/dev.test.mjs` asserts a full dev lesson run leaves the persisted store byte-identical; smoke test drives the unlock → panel → isolated run → disable flow in-browser and re-asserts byte-identity. — STARTED 2026-06-27, PR #<tbd> (CC)
+- [ ] Alex feel-check — unlock flow on real device, launch a Unit 3 lesson before clearing Units 1–2, eyeball the diagnostics for the new unit, confirm real progress is untouched after a dev session. (Alex)
 
 ---
 

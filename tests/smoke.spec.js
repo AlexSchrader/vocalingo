@@ -443,3 +443,52 @@ test("reviews are app-judged — no self-grading, grades persist", async ({ page
   await expect(page.getByText("Reviews cleared")).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+// ---- Dev Mode (hidden playtest panel) --------------------------------------
+
+test("dev mode: unlock from Settings, panel shows diagnostics, isolated run leaves store unchanged", async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+
+  await page.goto("/");
+
+  // Unlock via the Settings code field — wrong code is rejected, right code opens the panel.
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByLabel("Dev Mode code").fill("wrong");
+  await page.getByRole("button", { name: "Unlock" }).click();
+  await expect(page.getByText("Not the right code.")).toBeVisible();
+  await page.getByLabel("Dev Mode code").fill("L071201");
+  await page.getByRole("button", { name: "Unlock" }).click();
+
+  // Lands on the dev panel with the diagnostics readout (reads from UNITS data).
+  await expect(page.getByText("Units registered")).toBeVisible();
+  await expect(page.getByText("Kana with stroke data")).toBeVisible();
+
+  // Snapshot the persisted store (devMode already unlocked) before an isolated run.
+  const before = await page.evaluate(() => localStorage.getItem("lingua-v1"));
+
+  // Launch a Fresh lesson directly (bypasses ladder gating) and play it through.
+  await page.getByRole("button", { name: "Fresh" }).first().click();
+  await expect(page.locator("text=/🧪 Dev ·/")).toBeVisible();
+  for (let i = 0; i < 80; i++) {
+    const kind = await playCard(page);
+    if (kind === false) break;
+    await page.waitForTimeout(20);
+  }
+  await page.getByRole("button", { name: "Back to Dev panel" }).click();
+  await expect(page.getByText("Units registered")).toBeVisible();
+
+  // CRITICAL: the dev run wrote nothing to real state — byte-identical.
+  const after = await page.evaluate(() => localStorage.getItem("lingua-v1"));
+  expect(after).toBe(before);
+
+  // Disable Dev Mode toggles it back off and survives a reload.
+  await page.getByRole("button", { name: "Back" }).click();
+  await page.getByRole("button", { name: "Disable Dev Mode" }).click();
+  await expect(page.getByLabel("Dev Mode code")).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Dev Mode code")).toBeVisible();
+
+  expect(errors).toEqual([]);
+});
