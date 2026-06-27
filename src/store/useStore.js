@@ -4,6 +4,7 @@ import { seedItems, LANGUAGES, UNITS } from "../data/index.js";
 import { newCard, schedule, isDue } from "./srs.js";
 import { nextRung, isReviewable } from "./mastery.js";
 import { migrateState, PERSIST_VERSION } from "./migrate.js";
+import { matchesDevCode } from "./dev.js";
 
 // Seed every item with a fresh FSRS card attached as its srs. Card attachment
 // lives here (not in the data loader) per Brief 2.
@@ -72,6 +73,7 @@ export const useStore = create(
       streak: { current: 0, longest: 0, freezes: 2, lastActive: null },
       stats: { xpTotal: 0 },
       daily: { date: null, reviewsCleared: false, lessonDone: false },
+      devMode: false,
       ui: {},
 
       // Merge seed items in on first run; no-op once items exist. Also rolls the
@@ -241,6 +243,16 @@ export const useStore = create(
         });
       },
 
+      // Dev Mode unlock (Settings → code field). Convenience for solo
+      // playtesting, NOT security — the code lives in the bundle. Persisted so it
+      // survives reloads; `disableDevMode` turns it back off.
+      unlockDevMode: (code) => {
+        if (!matchesDevCode(code)) return false;
+        set({ devMode: true });
+        return true;
+      },
+      disableDevMode: () => set({ devMode: false }),
+
       // Dev/testing helper: wipe all persisted progress back to seed.
       resetAll: () => {
         set({
@@ -283,6 +295,7 @@ export const useStore = create(
         streak: s.streak,
         stats: s.stats,
         daily: s.daily,
+        devMode: s.devMode,
         // ui is transient; not persisted.
       }),
     }

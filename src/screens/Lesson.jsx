@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PhaseShell from "../components/PhaseShell.jsx";
 import TeachCard from "../components/games/TeachCard.jsx";
 import ChoiceCard from "../components/games/ChoiceCard.jsx";
@@ -10,6 +10,7 @@ import { useStore } from "../store/useStore.js";
 import { getLesson } from "../data/index.js";
 import { LIVE_CARD_KINDS } from "../data/contract.js";
 import { initLearn, currentStep, answerStep } from "../store/learnQueue.js";
+import { buildSandboxItems, runnerWriters } from "../store/dev.js";
 import { C, F } from "../theme.js";
 
 function assertLiveKind(kindKey) {
@@ -34,11 +35,28 @@ function recallMode() {
 export default function Lesson() {
   const { lessonId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const items = useStore((s) => s.items);
-  const graduateItem = useStore((s) => s.graduateItem);
-  const completeLesson = useStore((s) => s.completeLesson);
-  const rollDailyGoal = useStore((s) => s.rollDailyGoal);
+  // Sandbox (Dev Mode) run: read from a throwaway in-memory items map and route
+  // every store writer to a no-op, so launching a lesson from the dev panel never
+  // touches real FSRS/mastery/streak/persistence. Isolation is explicit here.
+  const sandbox = searchParams.get("sandbox") === "1";
+  const home = sandbox ? "/dev" : "/";
+
+  const storeItems = useStore((s) => s.items);
+  const sandboxItems = useMemo(
+    () => (sandbox ? buildSandboxItems(lessonId, searchParams.get("state") ?? "fresh") : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sandbox, lessonId]
+  );
+  const items = sandbox ? sandboxItems : storeItems;
+
+  const realWriters = {
+    graduateItem: useStore((s) => s.graduateItem),
+    completeLesson: useStore((s) => s.completeLesson),
+    rollDailyGoal: useStore((s) => s.rollDailyGoal),
+  };
+  const { graduateItem, completeLesson, rollDailyGoal } = runnerWriters(sandbox, realWriters);
 
   const lesson = useMemo(() => getLesson(lessonId), [lessonId]);
 
@@ -67,7 +85,7 @@ export default function Lesson() {
 
   if (!lesson) {
     return (
-      <PhaseShell title="Lesson" progress={0} onClose={() => navigate("/")}>
+      <PhaseShell title="Lesson" progress={0} onClose={() => navigate(home)}>
         <div style={{ margin: "auto", color: C.inkSoft }}>Lesson not found.</div>
       </PhaseShell>
     );
@@ -99,7 +117,7 @@ export default function Lesson() {
           </div>
           <button
             data-testid="back-to-today"
-            onClick={() => navigate("/")}
+            onClick={() => navigate(home)}
             style={{
               marginTop: 8,
               padding: "14px 28px",
@@ -113,7 +131,7 @@ export default function Lesson() {
               cursor: "pointer",
             }}
           >
-            Back to Today
+            {sandbox ? "Back to Dev panel" : "Back to Today"}
           </button>
         </div>
       </PhaseShell>
@@ -158,9 +176,9 @@ export default function Lesson() {
 
   return (
     <PhaseShell
-      title={`${label} · ${Math.min(learn.pos + 1, total)}/${total}`}
+      title={`${sandbox ? "🧪 Dev · " : ""}${label} · ${Math.min(learn.pos + 1, total)}/${total}`}
       progress={progress}
-      onClose={() => navigate("/")}
+      onClose={() => navigate(home)}
     >
       {body}
     </PhaseShell>

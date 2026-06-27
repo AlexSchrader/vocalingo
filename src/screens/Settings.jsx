@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { RotateCcw, Globe, Info, AlertTriangle } from "lucide-react";
+import { RotateCcw, Globe, Info, AlertTriangle, FlaskConical, ChevronRight } from "lucide-react";
 import { useStore } from "../store/useStore.js";
 import { LANGUAGES } from "../data/index.js";
 import { C, F } from "../theme.js";
@@ -31,7 +31,12 @@ export default function Settings() {
   const languages = useStore((s) => s.languages);
   const streak = useStore((s) => s.streak);
   const stats = useStore((s) => s.stats);
+  const devMode = useStore((s) => s.devMode);
+  const unlockDevMode = useStore((s) => s.unlockDevMode);
+  const disableDevMode = useStore((s) => s.disableDevMode);
   const [confirming, setConfirming] = useState(false);
+  const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState(false);
 
   const ja = languages.ja ?? LANGUAGES[0];
 
@@ -39,6 +44,16 @@ export default function Settings() {
     resetAll();
     setConfirming(false);
     navigate("/");
+  };
+
+  const tryUnlock = () => {
+    if (unlockDevMode(code)) {
+      setCode("");
+      setCodeError(false);
+      navigate("/dev");
+    } else {
+      setCodeError(true);
+    }
   };
 
   return (
@@ -132,6 +147,58 @@ export default function Settings() {
                 Reset everything
               </button>
             </div>
+          </div>
+        )}
+      </Section>
+
+      <Section title="Dev Mode">
+        {devMode ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <button
+              onClick={() => navigate("/dev")}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: 14, borderRadius: 12, border: `1.5px solid ${C.ai}`, background: C.aiSoft, color: C.aiDeep, fontSize: 15, fontWeight: 700, fontFamily: F.body, cursor: "pointer" }}
+            >
+              <FlaskConical size={18} />
+              <span style={{ flex: 1, textAlign: "left" }}>Open dev panel</span>
+              <ChevronRight size={18} />
+            </button>
+            <button
+              onClick={disableDevMode}
+              style={{ width: "100%", padding: 12, borderRadius: 12, border: `1.5px solid ${C.line}`, background: C.surface, color: C.inkSoft, fontSize: 14, fontWeight: 700, fontFamily: F.body, cursor: "pointer" }}
+            >
+              Disable Dev Mode
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ fontSize: 13, color: C.inkSoft }}>Enter the playtest code to unlock.</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  setCodeError(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") tryUnlock();
+                }}
+                placeholder="Code"
+                aria-label="Dev Mode code"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                style={{ flex: 1, padding: "12px 14px", borderRadius: 12, border: `1.5px solid ${codeError ? C.shu : C.line}`, background: C.surface, color: C.ink, fontSize: 15, fontFamily: F.mono, outline: "none" }}
+              />
+              <button
+                onClick={tryUnlock}
+                style={{ padding: "12px 18px", borderRadius: 12, border: "none", background: C.ai, color: "#fff", fontSize: 15, fontWeight: 700, fontFamily: F.body, cursor: "pointer" }}
+              >
+                Unlock
+              </button>
+            </div>
+            {codeError && (
+              <div style={{ fontSize: 13, color: C.shu, fontWeight: 600 }}>Not the right code.</div>
+            )}
           </div>
         )}
       </Section>

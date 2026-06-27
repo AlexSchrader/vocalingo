@@ -5,6 +5,7 @@ import Today from "./screens/Today.jsx";
 import Ladder from "./screens/Ladder.jsx";
 import Stats from "./screens/Stats.jsx";
 import Settings from "./screens/Settings.jsx";
+import DevPanel from "./screens/DevPanel.jsx";
 import Lesson from "./screens/Lesson.jsx";
 import Review from "./screens/Review.jsx";
 
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="haruki" element={<Suspense fallback={null}><Haruki /></Suspense>} />
         <Route path="stats" element={<Stats />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="dev" element={<DevPanel />} />
       </Route>
       <Route path="review" element={<Review />} />
       <Route path="lesson/:lessonId" element={<Lesson />} />
