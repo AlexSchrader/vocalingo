@@ -32,7 +32,7 @@ This file is updated as part of the PR that completes work. When a task is finis
 - **Queued:** **Unit 3 dakuten curriculum (next)**; capture agent voice settings → tune lesson clips; mastery-feel tuning; mascot costumes; mini-games (Future).
 - **⚡️ Next build thread:** **Unit 3 (dakuten curriculum)** — が/ざ/だ/ば/ぱ + handakuten. Needs a brief/content then Alex line-by-line review.
 - **Phase numbers = dependency map, not a queue.** Curriculum runs as the default thread between every feature sprint. Onboarding (Phase 5), the Ladder screen (4.6), and the Haruki agent (6.5) slot in as their dependencies clear.
-- **In flight (PR open):** **Dev Mode** — hidden playtest panel in Settings (unlock `L071201`), launches any unit/lesson bypassing gating in a fully-isolated sandbox run (no writes to real state). See Phase 4.7. Branch `claude/dev-mode-playtest-panel`.
+- **Shipped to `main` (2026-06-27):** **Dev Mode** — hidden playtest panel in Settings (unlock `L071201`), launches any unit/lesson bypassing gating in a fully-isolated sandbox run (byte-identical real state before/after). PR #32. See Phase 4.7. Remaining: Alex device feel-check.
 - **Last updated:** 2026-06-27
 
 ---
@@ -171,13 +171,13 @@ exercise any unit/lesson — including ones gated behind the ladder — without 
 and **without ever touching real progress**. Isolation is the hard requirement: a dev run must
 leave the persisted store byte-identical.
 
-- [~] Unlock — Settings code field (`L071201`) flips a persisted `devMode` flag (survives reloads); "Disable Dev Mode" toggles it back off. Convenience, not security — code ships in the bundle, nothing sensitive gated. `unlockDevMode`/`disableDevMode` in `useStore.js`, `devMode` added to `partialize`. — STARTED 2026-06-27, PR #32 (CC)
-- [~] Dev panel (`/dev`, visible only when unlocked) — lists every registered unit → its lessons from UNITS data (no hardcoded names), fluid layout. Tap any lesson to launch it directly, bypassing ladder/unlock gating. — STARTED 2026-06-27, PR #32 (CC)
-- [~] Layout-state preview — launch a lesson as **Fresh** (teach flow) / **Mid-progress** / **Mastered** (review flow at the matching rung+stability), to check those card UIs without grinding. — STARTED 2026-06-27, PR #32 (CC)
-- [~] Diagnostics readout (`devDiagnostics()` in `src/store/dev.js`) — units registered, lessons, item counts, total kana **with vs without KanjiVG stroke data** (flags any missing). The "is the new unit wired right" check. — STARTED 2026-06-27, PR #32 (CC)
-- [~] "Reset my real progress" (confirm-gated) — wipes progress via `resetAll`; leaves Dev Mode unlocked. — STARTED 2026-06-27, PR #32 (CC)
-- [~] **Fully isolated runs (critical)** — explicit `sandbox` flag the Lesson **and** Review runners respect (`?sandbox=1`): throwaway in-memory items (`buildSandboxItems`) + every store writer swapped for a no-op (`runnerWriters`). No FSRS/mastery/streak/XP/persistence writes. — STARTED 2026-06-27, PR #32 (CC)
-- [~] Test — `tests/unit/dev.test.mjs` asserts a full dev lesson run leaves the persisted store byte-identical; smoke test drives the unlock → panel → isolated run → disable flow in-browser and re-asserts byte-identity. — STARTED 2026-06-27, PR #32 (CC)
+- [x] Unlock — Settings code field (`L071201`) flips a persisted `devMode` flag (survives reloads); "Disable Dev Mode" toggles it back off. Convenience, not security — code ships in the bundle, nothing sensitive gated. `unlockDevMode`/`disableDevMode` in `useStore.js`, `devMode` added to `partialize`. — DONE 2026-06-27 19:34, PR #32 (CC)
+- [x] Dev panel (`/dev`, visible only when unlocked) — lists every registered unit → its lessons from UNITS data (no hardcoded names), fluid layout. Tap any lesson to launch it directly, bypassing ladder/unlock gating. — DONE 2026-06-27 19:34, PR #32 (CC)
+- [x] Layout-state preview — launch a lesson as **Fresh** (teach flow) / **Mid-progress** / **Mastered** (review flow at the matching rung+stability), to check those card UIs without grinding. — DONE 2026-06-27 19:34, PR #32 (CC)
+- [x] Diagnostics readout (`devDiagnostics()` in `src/store/dev.js`) — units registered, lessons, item counts, total kana **with vs without KanjiVG stroke data** (flags any missing). The "is the new unit wired right" check. — DONE 2026-06-27 19:34, PR #32 (CC)
+- [x] "Reset my real progress" (confirm-gated) — wipes progress via `resetAll`; leaves Dev Mode unlocked. — DONE 2026-06-27 19:34, PR #32 (CC)
+- [x] **Fully isolated runs (critical)** — explicit `sandbox` flag the Lesson **and** Review runners respect (`?sandbox=1`): throwaway in-memory items (`buildSandboxItems`) + every store writer swapped for a no-op (`runnerWriters`). No FSRS/mastery/streak/XP/persistence writes. — DONE 2026-06-27 19:34, PR #32 (CC)
+- [x] Test — `tests/unit/dev.test.mjs` asserts a full dev lesson run leaves the persisted store byte-identical; smoke test drives the unlock → panel → isolated run → disable flow in-browser and re-asserts byte-identity. — DONE 2026-06-27 19:34, PR #32 (CC)
 - [ ] Alex feel-check — unlock flow on real device, launch a Unit 3 lesson before clearing Units 1–2, eyeball the diagnostics for the new unit, confirm real progress is untouched after a dev session. (Alex)
 
 ---
