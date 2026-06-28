@@ -48,7 +48,6 @@ export const UNIT3 = {
         { id: "ja-u3l2-zu", type: "kana", front: "ず", reading: "zu", meaning: null, example: null, hint: "ず is す + ゛. SU voices into ZU." },
         { id: "ja-u3l2-ze", type: "kana", front: "ぜ", reading: "ze", meaning: null, example: null, hint: "ぜ is せ + ゛. SE voices into ZE." },
         { id: "ja-u3l2-zo", type: "kana", front: "ぞ", reading: "zo", meaning: null, example: null, hint: "ぞ is そ + ゛. SO voices into ZO." },
-        { id: "ja-u3l2-jikan",  type: "vocab", front: "じかん",   reading: "jikan",  meaning: "time",      example: { jp: "じかんがありません。",    en: "I don't have time." },     accept: ["hour"] },
         { id: "ja-u3l2-zasshi", type: "vocab", front: "ざっし",   reading: "zasshi", meaning: "magazine",  example: { jp: "ざっしをよみます。",      en: "I read a magazine." },     accept: ["magazines"] },
         { id: "ja-u3l2-zenbu",  type: "vocab", front: "ぜんぶ",   reading: "zenbu",  meaning: "all/everything", example: { jp: "ぜんぶたべました。",   en: "I ate everything." },      accept: ["everything", "the whole thing"] },
         { id: "ja-u3l2-kazoku", type: "vocab", front: "かぞく",   reading: "kazoku", meaning: "family",    example: { jp: "かぞくとすみます。",      en: "I live with my family." }, accept: ["families"] },

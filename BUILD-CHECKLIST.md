@@ -125,7 +125,7 @@ The make-or-break thread. Units 1–2 (46 base hiragana, あ-ん) shipped and Al
 - [x] Unit 9 — たべもの・まいにち (`stage: "a1"`): food + the core ～ます verbs (たべます/いきます…) as learnable vocab. — DONE 2026-06-28, PR #36 (CC)
 - [x] Unit 10 — まち・ばしょ (`stage: "a1"`): places in town, parts of a home, position words, first describing adjectives. — DONE 2026-06-28, PR #36 (CC)
   - Design notes (Units 7–10, CC off CLAUDE.md — no external guide in-repo): examples reuse ONLY Units 1–3 grammar (は/を/が/に/で/の + です/ます + fixed question frames); loanword vocab may use not-yet-taught katakana (whole-word recognition, as Unit 4 did); no-space example convention kept (matches U1–6).
-- [ ] **Dedupe pass (Alex/Claude):** a few thematic words re-introduce an earlier incidental vocab in its proper systematic home — `ろく` (six, Unit 7) and the number words `に`/`ご` share a front with the kana items. Keep (reinforcement) vs dedupe? (`kazoku`/`gakkō`/`tokei` live only as examples, not new items.) (Alex/Claude)
+- [~] **Dedupe pass** — STARTED 2026-06-28, draft PR (CC, `fix/curriculum-dedup-cleanup`; **Claude to review before merge**). Removed the two duplicate vocab fronts: `ろく` (kept in Unit 7 numbers, removed from u2l4) and `じかん` (kept in Unit 9 daily-life, removed from u3l2). Kept `ご`/`に`/`じ` as both kana items AND u7 number/time words — **confirmed mastery/SRS keys on item id, not front** (`s.items[id]`, `seedItems` → `out[item.id]`; only `.front` lookups are KanjiVG stroke data), so same-front items track independently. Added a hard validator rule (vocab-front uniqueness, kana→word reuse allowed) so future dupes fail CI. (CC/Claude)
 - [ ] Spaced-kana examples? — A1 sentences are kept space-less to match U1–6. Spaced kana reads easier for beginners; if wanted it's a global convention change across all units. (Alex/Claude)
 - [ ] Run `npm run generate:audio` for Units 4–10 once content is locked (new items only). (CC)
 - [ ] First kanji — numbers, days, everyday kanji. **Likely needs a new `kanji` item type** (meaning + reading, maybe stroke data) → contract change + its own brief. `stage: "a1"`. (Claude/CC)
@@ -141,7 +141,7 @@ The make-or-break thread. Units 1–2 (46 base hiragana, あ-ん) shipped and Al
 #### Cross-cutting curriculum notes
 
 - [ ] を reading edge — if playtest shows learners typing "o" (を is phonetically /o/ in modern Japanese), fold wo↔o tolerance into `checkReading`. (CC)
-- [ ] Non-blocking content polish from Unit 2 review: ja-u2l2-mono example (これはなんですか preferred over このものはなんですか); ja-u2l4-roku example (ろくじです introduces time-telling ahead of where it's taught). Fix in a content-only PR. (Claude/CC)
+- [ ] Non-blocking content polish from Unit 2 review: ja-u2l2-mono example (これはなんですか preferred over このものはなんですか). *(The ja-u2l4-roku "ろくじです teaches time too early" note is resolved — ろく was removed from u2 in the dedupe pass above.)* Fix the remaining ja-u2l2-mono item in a content-only PR. (Claude/CC)
 
 ---
 

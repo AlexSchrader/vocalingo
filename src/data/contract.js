@@ -221,6 +221,22 @@ export function validateContent(units, languages) {
     }
   }
 
+  // Vocab front uniqueness: a given word (vocab front) gets exactly one home —
+  // teaching the same word in two units is a duplicate to dedupe. A vocab front
+  // MAY coincide with a kana item's front (e.g. the number-word に / ご is the
+  // same single character as the kana — that kana→word reuse is intentional), so
+  // this checks vocab against vocab only, never against kana.
+  const vocabFronts = new Map(); // front → first item id
+  for (const { item } of allItems) {
+    if (item.type !== "vocab") continue;
+    if (vocabFronts.has(item.front))
+      e(
+        `item ${item.id}: vocab front "${item.front}" is already taught in item ${vocabFronts.get(item.front)} — ` +
+          `a word should have a single home (dedupe the duplicate)`
+      );
+    else vocabFronts.set(item.front, item.id);
+  }
+
   // Warning: multi-word vocab with no accept[] synonyms. A typed-meaning check
   // against e.g. "good morning" will reject "morning" without an accept entry.
   for (const { item } of allItems) {

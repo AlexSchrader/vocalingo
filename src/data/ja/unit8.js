@@ -24,7 +24,7 @@ export const UNIT8 = {
       items: [
         { id: "ja-u8l1-chichi", type: "vocab", front: "ちち", reading: "chichi", meaning: "my father", example: { jp: "ちちはせんせいです。", en: "My father is a teacher." }, accept: ["father", "dad", "my dad"], hint: "ちち is YOUR OWN father (humble). For someone else's father you say おとうさん — that pair comes back in Lesson 3." },
         { id: "ja-u8l1-haha",   type: "vocab", front: "はは", reading: "haha", meaning: "my mother", example: { jp: "ははがすきです。", en: "I love my mother." }, accept: ["mother", "mom", "mum", "my mom"] },
-        { id: "ja-u8l1-ryoshin", type: "vocab", front: "りょうしん", reading: "ryōshin", meaning: "my parents", example: { jp: "これはりょうしんです。", en: "These are my parents." }, accept: ["parents", "both parents"] },
+        { id: "ja-u8l1-ryoshin", type: "vocab", front: "りょうしん", reading: "ryōshin", meaning: "my parents", example: { jp: "こちらはりょうしんです。", en: "These are my parents." }, accept: ["parents", "both parents"] },
         { id: "ja-u8l1-sofu",   type: "vocab", front: "そふ", reading: "sofu", meaning: "my grandfather", example: { jp: "そふはげんきです。", en: "My grandfather is well." }, accept: ["grandfather", "grandpa"] },
         { id: "ja-u8l1-sobo",   type: "vocab", front: "そぼ", reading: "sobo", meaning: "my grandmother", example: { jp: "そぼがすきです。", en: "I love my grandmother." }, accept: ["grandmother", "grandma"] },
         { id: "ja-u8l1-oya",    type: "vocab", front: "おや", reading: "oya", meaning: "parent", example: { jp: "おやとこどもです。", en: "A parent and a child." }, accept: ["a parent", "parents"] },

@@ -88,7 +88,6 @@ export const UNIT2 = {
         { id: "ja-u2l4-ringo",  type: "vocab", front: "りんご",  reading: "ringo",  meaning: "apple",      example: { jp: "りんごをたべます。",     en: "I eat an apple." },                accept: [] },
         { id: "ja-u2l4-raku",   type: "vocab", front: "らく",    reading: "raku",   meaning: "comfortable", example: { jp: "このいすはらくです。",   en: "This chair is comfortable." },     accept: ["easy", "relaxed", "relaxing"] },
         { id: "ja-u2l4-kuruma", type: "vocab", front: "くるま",  reading: "kuruma", meaning: "car",         example: { jp: "くるまにのります。",     en: "I'll take a car." },               accept: ["automobile", "vehicle"] },
-        { id: "ja-u2l4-roku",   type: "vocab", front: "ろく",    reading: "roku",   meaning: "six",         example: { jp: "ろくじです。",           en: "It is six o'clock." },             accept: ["6"] },
         { id: "ja-u2l4-shiro",  type: "vocab", front: "しろ",    reading: "shiro",  meaning: "white",       example: { jp: "しろいねこです。",       en: "It's a white cat." },              accept: [] },
       ],
     },

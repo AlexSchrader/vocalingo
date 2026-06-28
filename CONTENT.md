@@ -140,6 +140,11 @@ Dormant (not yet wired):
 10. Each kana *character* appears in at most one item across the corpus.
 11. Items contain only known fields: `{ id, type, front, reading, meaning, example, accept, hint }`.
     Any unknown key is a hard error. `hint` must be a non-empty string if present.
+12. Each **vocab** `front` (word) appears in at most one item — a word gets a single
+    home; teaching it twice is a duplicate to dedupe. A vocab front *may* coincide
+    with a kana item's front (e.g. the number-word `に`/`ご` is the same character as
+    the kana — that kana→word reuse is intentional); only vocab-vs-vocab collisions error.
+13. Every unit has a valid `stage` (`pre-a1 | a1 | a2 | b1 | b2`).
 
 ## Validation rules (warnings — advisory)
 

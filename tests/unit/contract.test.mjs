@@ -234,6 +234,46 @@ test("rejects a unit with a missing or invalid stage", () => {
   assert.ok(!ok, `Did not expect a stage error for a valid stage, got: ${ok}`);
 });
 
+test("rejects the same vocab front taught in two items", () => {
+  const unit = {
+    id: "ja-u1", lang: "ja", order: 1, stage: "pre-a1", title: "Dup vocab front",
+    lessons: [
+      {
+        id: "ja-u1l1", unit: 1, lesson: 1, title: "L1", dominantMode: "recall", canDo: "t", cefr: "A1",
+        items: [
+          { id: "ja-u1l1-ro", type: "kana", front: "ろ", reading: "ro", meaning: null, example: null },
+          { id: "ja-u1l1-roku1", type: "vocab", front: "ろく", reading: "roku", meaning: "six", example: { jp: "ろく。", en: "Six." }, accept: ["6"] },
+          { id: "ja-u1l1-roku2", type: "vocab", front: "ろく", reading: "roku", meaning: "six", example: { jp: "ろく。", en: "Six." }, accept: ["6"] },
+        ],
+      },
+    ],
+  };
+  const err = validateContent([unit], LANGUAGES).errors.find(
+    (e) => e.includes("ja-u1l1-roku2") && e.includes("already taught")
+  );
+  assert.ok(err, `Expected a duplicate vocab-front error for ja-u1l1-roku2, got none`);
+});
+
+test("allows a vocab front that matches an earlier kana item's front (kana → word)", () => {
+  // The number-word に is the same single character as the kana に — intentional.
+  const unit = {
+    id: "ja-u1", lang: "ja", order: 1, stage: "pre-a1", title: "Kana then word",
+    lessons: [
+      {
+        id: "ja-u1l1", unit: 1, lesson: 1, title: "L1", dominantMode: "recall", canDo: "t", cefr: "A1",
+        items: [
+          { id: "ja-u1l1-ni", type: "kana", front: "に", reading: "ni", meaning: null, example: null },
+          { id: "ja-u1l1-nitwo", type: "vocab", front: "に", reading: "ni", meaning: "two", example: { jp: "に。", en: "Two." }, accept: ["2"] },
+        ],
+      },
+    ],
+  };
+  const err = validateContent([unit], LANGUAGES).errors.find(
+    (e) => e.includes("front") && e.includes("already taught")
+  );
+  assert.ok(!err, `Did not expect a vocab-front error for kana→word reuse, got: ${err}`);
+});
+
 // ---- LIVE_CARD_KINDS canonical set ------------------------------------------
 
 // This test defines the expected set. If you add a new card kind to the runner,
