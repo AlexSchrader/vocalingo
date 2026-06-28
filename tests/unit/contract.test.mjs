@@ -284,15 +284,14 @@ test("accepts a kanji item type but requires meaning + stroke data", () => {
       },
     ],
   });
-  // type "kanji" is accepted (no "type is not valid" error)
-  const typeErr = validateContent([mk()], LANGUAGES).errors.find((e) => e.includes("is not valid"));
-  assert.ok(!typeErr, `kanji type should be accepted, got: ${typeErr}`);
+  // 一 is a valid kanji (has KanjiVG strokes from Unit 11) → no errors at all
+  assert.deepEqual(validateContent([mk()], LANGUAGES).errors, [], "a valid kanji item should pass");
   // missing meaning → error
   const noMeaning = validateContent([mk({ meaning: "" })], LANGUAGES).errors.find((e) => e.includes("kanji") && e.includes("meaning"));
   assert.ok(noMeaning, "expected a kanji-meaning error");
-  // 一 has no KanjiVG entry in the test corpus → stroke-data error fires
-  const noStrokes = validateContent([mk()], LANGUAGES).errors.find((e) => e.includes("stroke data"));
-  assert.ok(noStrokes, "expected a kanji stroke-data error (一 not in KANJIVG yet)");
+  // a kanji with no KanjiVG entry → stroke-data error fires (本 isn't in the corpus)
+  const noStrokes = validateContent([mk({ front: "本", reading: "hon", meaning: "book" })], LANGUAGES).errors.find((e) => e.includes("stroke data"));
+  assert.ok(noStrokes, "expected a kanji stroke-data error for 本");
 });
 
 // ---- LIVE_CARD_KINDS canonical set ------------------------------------------
