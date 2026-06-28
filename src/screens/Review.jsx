@@ -5,6 +5,7 @@ import ChoiceCard from "../components/games/ChoiceCard.jsx";
 import TypeCard from "../components/games/TypeCard.jsx";
 import BuildCard from "../components/games/BuildCard.jsx";
 import TraceCard from "../components/games/TraceCard.jsx";
+import CardBreath from "../components/CardBreath.jsx";
 import { useStore } from "../store/useStore.js";
 import { isReviewable } from "../store/mastery.js";
 import { buildSandboxItems, runnerWriters } from "../store/dev.js";
@@ -129,20 +130,22 @@ export default function Review() {
   const kindKey = step.kind === "type" ? `type:${step.mode}` : step.kind;
   assertLiveKind(kindKey);
 
-  let body;
+  let card;
   if (step.kind === "choice") {
-    body = <ChoiceCard key={`r${idx}`} item={item} allItems={items} onGraded={onGraded} />;
+    card = <ChoiceCard item={item} allItems={items} onGraded={onGraded} />;
   } else if (step.kind === "type") {
-    body = <TypeCard key={`r${idx}`} item={item} mode={step.mode} onGraded={onGraded} />;
+    card = <TypeCard item={item} mode={step.mode} onGraded={onGraded} />;
   } else if (step.kind === "trace") {
-    body = <TraceCard key={`r${idx}`} item={item} mode="free" onGraded={onGraded} />;
+    card = <TraceCard item={item} mode="free" onGraded={onGraded} />;
   } else {
-    body = <BuildCard key={`r${idx}`} item={item} onGraded={onGraded} />;
+    card = <BuildCard item={item} onGraded={onGraded} />;
   }
 
   return (
     <PhaseShell title={`${sandbox ? "🧪 Dev · " : ""}Review · ${idx + 1}/${reviewQueue.length}`} progress={progress} onClose={() => navigate(home)}>
-      {body}
+      {/* Keyed remount per card drives the entrance "breath" (fade + brief
+          input guard) so carried taps don't bleed into the next card. */}
+      <CardBreath key={`r${idx}`}>{card}</CardBreath>
     </PhaseShell>
   );
 }
