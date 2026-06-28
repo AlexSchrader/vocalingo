@@ -3,6 +3,7 @@ export const UNIT1 = {
   lang: "ja",
   title: "はじめまして",
   order: 1,
+  stage: "pre-a1",
   lessons: [
     // Lesson 1: あ row + greetings
     {

@@ -8,6 +8,7 @@ export const UNIT3 = {
   lang: "ja",
   title: "まいにち",
   order: 3,
+  stage: "pre-a1",
   lessons: [
     // Lesson 1: が row (voiced か row)
     {

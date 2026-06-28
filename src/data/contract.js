@@ -17,6 +17,10 @@ export const LIVE_CARD_KINDS = [
 
 const CEFR_ORDER = { A1: 0, A2: 1, B1: 2, B2: 3 };
 const VALID_CEFR = Object.keys(CEFR_ORDER);
+// Coarse CEFR stage a unit belongs to — drives the Ladder's section grouping.
+// "pre-a1" is the scripts band (hiragana/katakana) that precedes A1 proper.
+// Latin-alphabet languages simply won't have any pre-a1 units.
+const VALID_STAGE = ["pre-a1", "a1", "a2", "b1", "b2"];
 const VALID_DOMINANT_MODE = ["recall", "recognize", "produce", "speak", "trace"];
 const VALID_ITEM_TYPES = ["kana", "vocab"];
 const LOCKED_STUB_KEYS = new Set(["id", "title", "locked"]);
@@ -83,6 +87,8 @@ export function validateContent(units, languages) {
       e(`unit ${unit.id}: title is empty`);
     if (!Number.isInteger(unit.order) || unit.order < 1)
       e(`unit ${unit.id}: order must be a positive integer`);
+    if (!VALID_STAGE.includes(unit.stage))
+      e(`unit ${unit.id}: stage "${unit.stage}" is missing or not one of ${VALID_STAGE.join(" | ")}`);
     if (!Array.isArray(unit.lessons) || unit.lessons.length === 0)
       e(`unit ${unit.id}: lessons must be a non-empty array`);
 

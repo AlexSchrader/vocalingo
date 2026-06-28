@@ -3,7 +3,8 @@
 // (title + theme only, no content). When a unit is authored it moves into UNITS
 // and drops off this list. Keyed by language so the Ladder stays data-driven.
 // `stage` matches the unit `stage` enum (contract.js) so the Ladder groups these
-// under the same section headers as authored units.
+// under the same section headers as authored units. (Katakana is fully authored
+// in Units 4-6, so it's no longer a roadmap placeholder.)
 export const ROADMAP = {
   ja: [
     { title: "First kanji", theme: "Numbers, days, everyday kanji", cefr: "A1", stage: "a1" },

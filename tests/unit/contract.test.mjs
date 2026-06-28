@@ -187,6 +187,7 @@ test("accepts a kana item with a hint field", () => {
     id: "ja-u1",
     lang: "ja",
     order: 1,
+    stage: "pre-a1",
     title: "Hint test",
     lessons: [{ id: "ja-u1l1", unit: 1, lesson: 1, title: "Hint kana", dominantMode: "recall", canDo: "test", cefr: "A1", items }],
   };
@@ -198,6 +199,39 @@ test("accepts a kana item with a hint field", () => {
     `Did not expect a hint-related error, got:\n${errors.join("\n")}`
   );
   assert.deepEqual(errors, [], `Expected no errors at all, got:\n${errors.join("\n")}`);
+});
+
+test("rejects a unit with a missing or invalid stage", () => {
+  const base = {
+    id: "ja-u1",
+    lang: "ja",
+    order: 1,
+    title: "Stage test",
+    lessons: [
+      {
+        id: "ja-u1l1", unit: 1, lesson: 1, title: "L1", dominantMode: "recall", canDo: "test", cefr: "A1",
+        items: [{ id: "ja-u1l1-x", type: "vocab", front: "テスト", reading: "tesuto", meaning: "test", example: { jp: "テスト", en: "test" }, accept: [] }],
+      },
+    ],
+  };
+
+  // Missing stage → error.
+  const missing = validateContent([base], LANGUAGES).errors.find(
+    (er) => er.includes("ja-u1") && er.includes("stage")
+  );
+  assert.ok(missing, `Expected a missing-stage error, got none`);
+
+  // Bogus stage value → error.
+  const bogus = validateContent([{ ...base, stage: "A1" }], LANGUAGES).errors.find(
+    (er) => er.includes("ja-u1") && er.includes("stage")
+  );
+  assert.ok(bogus, `Expected an invalid-stage error for "A1", got none`);
+
+  // Valid stage → no stage error.
+  const ok = validateContent([{ ...base, stage: "pre-a1" }], LANGUAGES).errors.find(
+    (er) => er.includes("stage")
+  );
+  assert.ok(!ok, `Did not expect a stage error for a valid stage, got: ${ok}`);
 });
 
 // ---- LIVE_CARD_KINDS canonical set ------------------------------------------

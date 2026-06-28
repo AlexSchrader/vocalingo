@@ -8,6 +8,20 @@ import { C, F } from "../theme.js";
 const CEFR_LEVELS = ["A1", "A2", "B1", "B2"];
 const CEFR_IDX = { "pre-A1": 0, A1: 1, A2: 2, B1: 3, B2: 4 };
 
+// Stage sectioning for the Units list. `stage` lives on each unit (and roadmap
+// entry); these drive the section headers in climb order. The JLPT tag is shown
+// only for the Japanese track — Latin-alphabet languages get plain CEFR labels
+// and simply render no Pre-A1 group (they have no pre-a1 units).
+const STAGE_ORDER = ["pre-a1", "a1", "a2", "b1", "b2"];
+const STAGE_LABEL = { "pre-a1": "Pre-A1", a1: "A1", a2: "A2", b1: "B1", b2: "B2" };
+const JLPT_BY_STAGE = { ja: { a1: "N5", a2: "N4", b1: "N3", b2: "N2" } };
+
+function stageHeading(langId, stage) {
+  const label = STAGE_LABEL[stage] ?? stage;
+  const jlpt = JLPT_BY_STAGE[langId]?.[stage];
+  return jlpt ? `${label} · ${jlpt}` : label;
+}
+
 // Authored item defs for a language, in lesson order (gojūon for kana).
 function defsFor(langId, predicate = () => true) {
   return UNITS.filter((u) => u.lang === langId)
@@ -237,9 +251,10 @@ function UnitsSection({ langId, items }) {
   const units = UNITS.filter((u) => u.lang === langId).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const roadmap = roadmapFor(langId);
 
-  // Per-unit progress; "current" = first unit not fully done.
+  // Per-unit progress; "current" = first unit not fully done (computed across the
+  // whole track, independent of sectioning).
   let currentMarked = false;
-  const rows = units.map((u) => {
+  const unitRows = units.map((u) => {
     const defs = u.lessons.filter((l) => Array.isArray(l.items)).flatMap((l) => l.items);
     const done = defs.filter((d) => (items[d.id]?.rung ?? 0) >= 1).length;
     const total = defs.length;
@@ -247,20 +262,54 @@ function UnitsSection({ langId, items }) {
     let status = "coming";
     if (isDone) status = "done";
     else if (!currentMarked) { status = "current"; currentMarked = true; }
-    return { unit: u, done, total, status };
+    return { kind: "unit", stage: u.stage ?? "a1", id: u.id, title: u.title, done, total, status };
   });
+  const roadmapRows = roadmap.map((r, i) => ({
+    kind: "coming", stage: r.stage ?? "a1", id: `rm${i}`, title: r.title, theme: r.theme,
+  }));
+
+  // Render one group per stage that actually has rows, in climb order. A global
+  // counter keeps the numbering continuous top-to-bottom across sections.
+  const stagesPresent = STAGE_ORDER.filter(
+    (s) => unitRows.some((r) => r.stage === s) || roadmapRows.some((r) => r.stage === s)
+  );
+  let n = 0;
 
   return (
     <Section title="Units">
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {rows.map(({ unit, done, total, status }, i) => (
-          <UnitRow key={unit.id} n={i + 1} title={unit.title} done={done} total={total} status={status} />
-        ))}
-        {roadmap.map((r, i) => (
-          <ComingRow key={`rm${i}`} n={units.length + i + 1} title={r.title} theme={r.theme} />
-        ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        {stagesPresent.map((stage) => {
+          const rows = [
+            ...unitRows.filter((r) => r.stage === stage),
+            ...roadmapRows.filter((r) => r.stage === stage),
+          ];
+          return (
+            <div key={stage} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <StageHeader label={stageHeading(langId, stage)} />
+              {rows.map((r) => {
+                n += 1;
+                return r.kind === "unit" ? (
+                  <UnitRow key={r.id} n={n} title={r.title} done={r.done} total={r.total} status={r.status} />
+                ) : (
+                  <ComingRow key={r.id} n={n} title={r.title} theme={r.theme} />
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
     </Section>
+  );
+}
+
+function StageHeader({ label }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: C.ai, textTransform: "uppercase" }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: 1, background: C.line }} />
+    </div>
   );
 }
 

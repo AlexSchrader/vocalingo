@@ -3,6 +3,7 @@ export const UNIT2 = {
   lang: "ja",
   title: "よろしく",
   order: 2,
+  stage: "pre-a1",
   lessons: [
     // Lesson 1: は row + everyday objects
     {

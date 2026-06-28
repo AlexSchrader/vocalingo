@@ -39,6 +39,7 @@ UNIT[]
 | lang     | string   | ✓        | must match a known language id |
 | title    | string   | ✓        | shown in the unit list |
 | order    | integer  | ✓        | 1-indexed, contiguous per language (no gaps) |
+| stage    | string   | ✓        | CEFR section the unit lives under: `"pre-a1"` `"a1"` `"a2"` `"b1"` `"b2"`. Drives the Ladder's stage grouping. `pre-a1` = the scripts band (kana); Latin-alphabet languages won't have any. |
 | lessons  | LESSON[] | ✓        | at least one entry |
 
 ---
