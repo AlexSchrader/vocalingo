@@ -5,9 +5,6 @@ import { roadmapFor } from "../data/ja/roadmap.js";
 import { masteryPct, isMastered } from "../store/mastery.js";
 import { C, F } from "../theme.js";
 
-const CEFR_LEVELS = ["A1", "A2", "B1", "B2"];
-const CEFR_IDX = { "pre-A1": 0, A1: 1, A2: 2, B1: 3, B2: 4 };
-
 // Stage sectioning for the Units list. `stage` lives on each unit (and roadmap
 // entry); these drive the section headers in climb order. The JLPT tag is shown
 // only for the Japanese track — Latin-alphabet languages get plain CEFR labels
@@ -29,14 +26,16 @@ function defsFor(langId, predicate = () => true) {
     .filter(predicate);
 }
 
-// Real A1 progress: fraction of A1-lesson items at rung ≥ 1.
-function a1PercentFor(langId, items) {
-  const defs = UNITS.filter((u) => u.lang === langId)
-    .flatMap((u) => u.lessons.filter((l) => l.cefr === "A1" && Array.isArray(l.items)))
-    .flatMap((l) => l.items);
-  if (defs.length === 0) return 0;
+// Progress within a CEFR stage: fraction of that stage's unit items at rung ≥ 1.
+// Stages are unit-level (`u.stage`), so a stage spans whole units (the kana
+// foundation is "pre-a1"; the first thematic vocab units are "a1"). Returns
+// totals so the spine can show "you're here / done / coming" honestly.
+function stageStats(langId, stage, items) {
+  const defs = UNITS.filter((u) => u.lang === langId && (u.stage ?? "a1") === stage)
+    .flatMap((u) => u.lessons.filter((l) => Array.isArray(l.items)).flatMap((l) => l.items));
+  const total = defs.length;
   const done = defs.filter((def) => (items[def.id]?.rung ?? 0) >= 1).length;
-  return Math.round((done / defs.length) * 100);
+  return { total, done, pct: total ? Math.round((done / total) * 100) : 0, complete: total > 0 && done === total };
 }
 
 function unlockText(lang) {
@@ -84,13 +83,16 @@ export default function Ladder() {
 // --- Active language: CEFR ladder (the spine) -------------------------------
 
 function ActiveLanguage({ lang, items }) {
-  const targetIdx = CEFR_IDX[lang.target] ?? 1;
-  const levelIdx = CEFR_IDX[lang.level] ?? 0;
-  const rungs = CEFR_LEVELS.filter((r) => CEFR_IDX[r] <= targetIdx);
-  // Current rung = first not-yet-completed level.
-  const currentRung = rungs.find((r) => CEFR_IDX[r] > levelIdx) ?? lang.target;
-  // Progress on the current level (only A1 has content today).
-  const currentPct = currentRung === "A1" ? a1PercentFor(lang.id, items) : null;
+  // The spine is the CEFR stages up to the goal, INCLUDING Pre-A1 — the kana
+  // foundation is a real stage you climb before A1, not A1 itself. Stages are
+  // unit-level, so "you're here" is derived from actual progress (the first
+  // stage that isn't fully complete), not a stored level that never advances.
+  const targetStageIdx = Math.max(0, STAGE_ORDER.indexOf((lang.target ?? "B2").toLowerCase()));
+  const stages = STAGE_ORDER.slice(0, targetStageIdx + 1);
+  const statsByStage = Object.fromEntries(stages.map((s) => [s, stageStats(lang.id, s, items)]));
+  // Current stage = first one not yet complete (or the goal, if all are done).
+  const currentStage = stages.find((s) => !statsByStage[s].complete) ?? stages[stages.length - 1];
+  const cur = statsByStage[currentStage];
 
   return (
     <div style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 18, padding: 16 }}>
@@ -110,12 +112,12 @@ function ActiveLanguage({ lang, items }) {
           current-level progress bar lives full-width BELOW, under the mascot. */}
       <div style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "stretch" }}>
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          {[...rungs].reverse().map((rung, i, arr) => (
+          {[...stages].reverse().map((stage, i, arr) => (
             <CefrRung
-              key={rung}
-              level={rung}
-              done={CEFR_IDX[rung] <= levelIdx}
-              current={rung === currentRung}
+              key={stage}
+              level={STAGE_LABEL[stage] ?? stage}
+              done={statsByStage[stage].complete}
+              current={stage === currentStage}
               first={i === 0}
               last={i === arr.length - 1}
             />
@@ -131,19 +133,19 @@ function ActiveLanguage({ lang, items }) {
         </div>
       </div>
 
-      {/* Current-level progress — full width, below the mascot. */}
-      {currentPct != null ? (
+      {/* Current-stage progress — full width, below the mascot. */}
+      {cur.total > 0 ? (
         <div style={{ marginTop: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, marginBottom: 6 }}>
-            <span style={{ fontWeight: 700, color: C.ink }}>{currentRung} progress</span>
-            <span style={{ fontWeight: 700, color: C.ai }}>{currentPct}%</span>
+            <span style={{ fontWeight: 700, color: C.ink }}>{stageHeading(lang.id, currentStage)} progress</span>
+            <span style={{ fontWeight: 700, color: C.ai }}>{cur.pct}%</span>
           </div>
           <div style={{ height: 10, borderRadius: 999, background: C.lockedBg, overflow: "hidden" }}>
-            <div style={{ width: `${currentPct}%`, height: "100%", background: C.ai, transition: "width 250ms ease" }} />
+            <div style={{ width: `${cur.pct}%`, height: "100%", background: C.ai, transition: "width 250ms ease" }} />
           </div>
         </div>
       ) : (
-        <div style={{ marginTop: 12, fontSize: 12, color: C.inkSoft }}>Lessons for {currentRung} coming soon.</div>
+        <div style={{ marginTop: 12, fontSize: 12, color: C.inkSoft }}>Lessons for {STAGE_LABEL[currentStage] ?? currentStage} coming soon.</div>
       )}
     </div>
   );
@@ -180,23 +182,63 @@ function CefrRung({ level, done, current, first, last }) {
   );
 }
 
-// --- Kana section -----------------------------------------------------------
+// --- Writing-system section -------------------------------------------------
+
+// Classify a kana by script + voicing, content-agnostically. NFD decomposition
+// exposes a combining dakuten (゛U+3099) or handakuten (゜U+309A) on voiced kana
+// (が = か + ゛), so base vs voiced is detected, never hardcoded — and katakana
+// vs hiragana is just the codepoint block. New rows (katakana dakuten, combos)
+// slot into the right group automatically as they ship.
+function kanaGroupOf(char) {
+  const voiced = /[゙゚]/.test(char.normalize("NFD"));
+  const cp = char.codePointAt(0);
+  const katakana = cp >= 0x30a0 && cp <= 0x30ff;
+  if (katakana) return voiced ? "kata-voiced" : "kata";
+  return voiced ? "hira-voiced" : "hira";
+}
+
+const KANA_GROUPS = [
+  { key: "hira", label: "Hiragana" },
+  { key: "hira-voiced", label: "Hiragana ゛゜" },
+  { key: "kata", label: "Katakana" },
+  { key: "kata-voiced", label: "Katakana ゛゜" },
+];
 
 function KanaSection({ langId, items }) {
   const kanaDefs = defsFor(langId, (d) => d.type === "kana");
   if (kanaDefs.length === 0) return null;
-  const learned = kanaDefs.filter((d) => (items[d.id]?.rung ?? 0) >= 1).length;
-  const mastered = kanaDefs.filter((d) => isMastered(items[d.id])).length;
+  const groups = KANA_GROUPS
+    .map((g) => ({ ...g, defs: kanaDefs.filter((d) => kanaGroupOf(d.front) === g.key) }))
+    .filter((g) => g.defs.length > 0);
 
   return (
-    <Section title={`Hiragana — ${learned}/${kanaDefs.length} learned`}>
-      <div style={{ fontSize: 12, color: C.inkSoft, marginBottom: 12 }}>
-        {mastered} mastered · the bar under each character fills as you review it over time.
+    <Section title="Writing system">
+      <div style={{ fontSize: 12, color: C.inkSoft, marginBottom: 14 }}>
+        The bar under each character fills as you review it over time.
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        {kanaDefs.map((d) => (
-          <KanaChip key={d.id} char={d.front} item={items[d.id]} />
-        ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        {groups.map((g) => {
+          const learned = g.defs.filter((d) => (items[d.id]?.rung ?? 0) >= 1).length;
+          const mastered = g.defs.filter((d) => isMastered(items[d.id])).length;
+          return (
+            <div key={g.key} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: C.ai, textTransform: "uppercase" }}>
+                  {g.label}
+                </span>
+                <div style={{ flex: 1, height: 1, background: C.line }} />
+                <span style={{ fontSize: 11, color: C.inkSoft, whiteSpace: "nowrap", flexShrink: 0 }}>
+                  {learned}/{g.defs.length} learned{mastered > 0 ? ` · ${mastered} mastered` : ""}
+                </span>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {g.defs.map((d) => (
+                  <KanaChip key={d.id} char={d.front} item={items[d.id]} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </Section>
   );
