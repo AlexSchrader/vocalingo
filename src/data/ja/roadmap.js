@@ -2,11 +2,13 @@
 // climb ahead is visible and the app doesn't feel empty. These are PLACEHOLDERS
 // (title + theme only, no content). When a unit is authored it moves into UNITS
 // and drops off this list. Keyed by language so the Ladder stays data-driven.
+// `stage` matches the unit `stage` enum (contract.js) so the Ladder groups these
+// under the same section headers as authored units.
 export const ROADMAP = {
   ja: [
-    { title: "カタカナ", theme: "The katakana script", cefr: "A1" },
-    { title: "Particles", theme: "Build sentences — は・が・を・に", cefr: "A2" },
-    { title: "First kanji", theme: "Numbers, days, everyday kanji", cefr: "A2" },
+    { title: "First kanji", theme: "Numbers, days, everyday kanji", cefr: "A1", stage: "a1" },
+    { title: "Particles & grammar", theme: "Build sentences — は・が・を・に・で", cefr: "A1", stage: "a1" },
+    { title: "A2 — N4", theme: "More grammar, kanji and vocabulary", cefr: "A2", stage: "a2" },
   ],
 };
 

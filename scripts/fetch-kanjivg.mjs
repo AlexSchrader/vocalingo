@@ -17,10 +17,13 @@ const ROOT = join(__dir, "..");
 // Kana that need stroke data — every kana item in the curriculum must have an
 // entry (the content contract hard-errors otherwise). Grows as units ship.
 //   base 46 hiragana (Units 1-2) + 25 dakuten/handakuten (Unit 3)
-//   + 25 katakana, vowels through n-row (Unit 4 — katakana part 1).
+//   + full katakana: vowels→n-row (Unit 4), h/m/y/r/w rows + ン (Unit 5),
+//     and g/z/d/b/p dakuten+handakuten rows (Unit 6).
 const HIRAGANA = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん";
 const DAKUTEN = "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ";
-const KATAKANA = "アイウエオカキクケコサシスセソタチツテトナニヌネノ";
+const KATAKANA = "アイウエオカキクケコサシスセソタチツテトナニヌネノ" + // Unit 4
+  "ハヒフヘホマミムメモヤユヨラリルレロワヲン" +                       // Unit 5
+  "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ";                  // Unit 6
 const kanaChars = (HIRAGANA + DAKUTEN + KATAKANA).split("");
 
 console.log(`Fetching KanjiVG data for ${kanaChars.length} kana: ${kanaChars.join(" ")}\n`);
