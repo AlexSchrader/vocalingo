@@ -2,7 +2,16 @@
 // All functions are fire-and-forget; errors are swallowed silently.
 //
 // Sounds are tuned to be ND-friendly: correct is warm/encouraging,
-// wrong is gentle (not a harsh buzzer), click is barely-there.
+// wrong is gentle (not a harsh buzzer), click is barely-there. They also respect
+// the user's "Sound effects" preference — off means total silence here (a real
+// need for sound-sensitive learners studying in quiet/shared spaces).
+
+import { useStore } from "./useStore.js";
+
+// Read the live preference at call time. Defaults to on if the store isn't ready.
+function sfxOn() {
+  try { return useStore.getState().settings?.sfx ?? true; } catch { return true; }
+}
 
 let _ctx = null;
 
@@ -13,6 +22,7 @@ function ac() {
 }
 
 function safe(fn) {
+  if (!sfxOn()) return;
   try { fn(ac()); } catch {}
 }
 

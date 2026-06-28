@@ -74,7 +74,15 @@ export const useStore = create(
       stats: { xpTotal: 0 },
       daily: { date: null, reviewsCleared: false, lessonDone: false },
       devMode: false,
+      // User preferences. `sfx` = synthesized answer chimes/clicks; `autoplayAudio`
+      // = auto-play the pronunciation clip when a Teach card appears (the speaker
+      // button always plays regardless). Both default on; persisted. Old persisted
+      // state without this key keeps these defaults via persist's shallow merge.
+      settings: { sfx: true, autoplayAudio: true },
       ui: {},
+
+      setSetting: (key, value) =>
+        set((s) => ({ settings: { ...s.settings, [key]: value } })),
 
       // Merge seed items in on first run; no-op once items exist. Also rolls the
       // daily bookkeeping over if the calendar day has changed.
@@ -296,6 +304,7 @@ export const useStore = create(
         stats: s.stats,
         daily: s.daily,
         devMode: s.devMode,
+        settings: s.settings,
         // ui is transient; not persisted.
       }),
     }

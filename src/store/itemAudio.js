@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useStore } from "./useStore.js";
 
 // Skip audio under Playwright/WebDriver so CI smoke tests stay fast and quiet.
 const IS_WEBDRIVER = typeof navigator !== "undefined" && !!navigator.webdriver;
@@ -11,6 +12,9 @@ const IS_WEBDRIVER = typeof navigator !== "undefined" && !!navigator.webdriver;
 export function useItemAudio(item) {
   const [active, setActive] = useState(false);
   const audioRef = useRef(null);
+  // Auto-play on a new card respects the user's preference; the speaker button
+  // (manual play) always plays regardless.
+  const autoplay = useStore((s) => s.settings?.autoplayAudio ?? true);
 
   function stop() {
     if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
@@ -40,8 +44,8 @@ export function useItemAudio(item) {
     a.play().catch(() => speakFallback());
   }
 
-  // Autoplay on mount / when the item changes.
-  useEffect(() => { play(); }, [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Autoplay on mount / when the item changes — unless the user turned it off.
+  useEffect(() => { if (autoplay) play(); }, [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => stop(), []); // cleanup on unmount
 
   return { play, active };

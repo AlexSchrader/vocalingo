@@ -25,6 +25,39 @@ function Row({ icon: Icon, label, value }) {
   );
 }
 
+function Toggle({ label, desc, checked, onChange }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600 }}>{label}</div>
+        {desc && <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2, lineHeight: 1.35 }}>{desc}</div>}
+      </div>
+      <button
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={() => onChange(!checked)}
+        style={{
+          width: 46,
+          height: 28,
+          borderRadius: 999,
+          flexShrink: 0,
+          border: "none",
+          cursor: "pointer",
+          padding: 3,
+          background: checked ? C.ai : C.locked,
+          display: "flex",
+          justifyContent: checked ? "flex-end" : "flex-start",
+          alignItems: "center",
+          transition: "background 150ms",
+        }}
+      >
+        <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#fff", display: "block" }} />
+      </button>
+    </div>
+  );
+}
+
 export default function Settings() {
   const navigate = useNavigate();
   const resetAll = useStore((s) => s.resetAll);
@@ -34,6 +67,8 @@ export default function Settings() {
   const devMode = useStore((s) => s.devMode);
   const unlockDevMode = useStore((s) => s.unlockDevMode);
   const disableDevMode = useStore((s) => s.disableDevMode);
+  const settings = useStore((s) => s.settings);
+  const setSetting = useStore((s) => s.setSetting);
   const [confirming, setConfirming] = useState(false);
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState(false);
@@ -69,6 +104,21 @@ export default function Settings() {
         <Row label="Streak" value={`${streak.current} day${streak.current === 1 ? "" : "s"}`} />
         <Row label="Freezes" value={streak.freezes} />
         <Row label="Total XP" value={stats.xpTotal} />
+      </Section>
+
+      <Section title="Sound">
+        <Toggle
+          label="Sound effects"
+          desc="Gentle chimes on correct and incorrect answers."
+          checked={settings?.sfx ?? true}
+          onChange={(v) => setSetting("sfx", v)}
+        />
+        <Toggle
+          label="Auto-play pronunciation"
+          desc="Say each new word aloud when it appears. The speaker button still works either way."
+          checked={settings?.autoplayAudio ?? true}
+          onChange={(v) => setSetting("autoplayAudio", v)}
+        />
       </Section>
 
       <Section title="Progress">
