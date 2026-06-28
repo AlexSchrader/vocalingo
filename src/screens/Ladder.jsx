@@ -197,11 +197,14 @@ function kanaGroupOf(char) {
   return voiced ? "hira-voiced" : "hira";
 }
 
+// The voiced rows carry their real names: the ゛dashes are "dakuten" (が/ざ/だ/ば),
+// the ゜circle is "handakuten" (ぱ). Showing the terms teaches them, instead of
+// the bare marks reading as just "lines and a circle".
 const KANA_GROUPS = [
   { key: "hira", label: "Hiragana" },
-  { key: "hira-voiced", label: "Hiragana ゛゜" },
+  { key: "hira-voiced", label: "Hiragana dakuten/handakuten" },
   { key: "kata", label: "Katakana" },
-  { key: "kata-voiced", label: "Katakana ゛゜" },
+  { key: "kata-voiced", label: "Katakana dakuten/handakuten" },
 ];
 
 function KanaSection({ langId, items }) {
