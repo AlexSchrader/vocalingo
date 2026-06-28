@@ -31,3 +31,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+// Cloud progress sync (Supabase) — dynamically imported so the SDK stays out of
+// the initial render path. No-ops entirely when Supabase env isn't configured.
+import("./store/cloudSync.js")
+  .then(({ initCloudSync }) => initCloudSync())
+  .catch(() => {});

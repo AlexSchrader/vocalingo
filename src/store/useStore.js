@@ -81,8 +81,40 @@ export const useStore = create(
       settings: { sfx: true, autoplayAudio: true },
       ui: {},
 
+      // Cloud sync (Supabase). `lastModified` is persisted and drives the
+      // push-vs-pull decision on sign-in (src/store/sync.js). `auth` is transient
+      // (never persisted). The signIn*/signOut actions are no-ops until
+      // cloudSync.initCloudSync wires the real Supabase calls in — that keeps the
+      // SDK out of the main bundle and out of the store module.
+      lastModified: 0,
+      auth: { configured: false, user: null, status: "idle", error: null },
+      signInWithGoogle: async () => {},
+      signInWithApple: async () => {},
+      signOut: async () => {},
+
       setSetting: (key, value) =>
         set((s) => ({ settings: { ...s.settings, [key]: value } })),
+
+      setAuth: (partial) => set((s) => ({ auth: { ...s.auth, ...partial } })),
+      bumpModified: () => set({ lastModified: Date.now() }),
+
+      // Apply a cloud progress blob. MERGES over the current item set so items
+      // added in a newer app version (absent from an older cloud blob) still
+      // exist at rung 0 — a pull never makes a unit disappear. Cloud item ids no
+      // longer in the curriculum are simply ignored.
+      hydrateFromCloud: (blob) =>
+        set((s) => {
+          const base = Object.keys(s.items).length ? s.items : freshSeed();
+          const items = { ...base };
+          for (const [id, it] of Object.entries(blob.items ?? {})) {
+            if (items[id]) items[id] = it;
+          }
+          const next = { items, lastModified: Date.now() };
+          for (const k of ["languages", "streak", "stats", "daily", "devMode", "settings"]) {
+            if (blob[k] !== undefined) next[k] = blob[k];
+          }
+          return next;
+        }),
 
       // Merge seed items in on first run; no-op once items exist. Also rolls the
       // daily bookkeeping over if the calendar day has changed.
@@ -305,7 +337,8 @@ export const useStore = create(
         daily: s.daily,
         devMode: s.devMode,
         settings: s.settings,
-        // ui is transient; not persisted.
+        lastModified: s.lastModified,
+        // ui + auth (and the signIn*/signOut fns) are transient; not persisted.
       }),
     }
   )

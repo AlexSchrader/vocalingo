@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { RotateCcw, Globe, Info, AlertTriangle, FlaskConical, ChevronRight } from "lucide-react";
+import { RotateCcw, Globe, Info, AlertTriangle, FlaskConical, ChevronRight, LogIn, LogOut, Cloud, CheckCircle2 } from "lucide-react";
 import { useStore } from "../store/useStore.js";
 import { LANGUAGES } from "../data/index.js";
 import { C, F } from "../theme.js";
@@ -69,6 +69,9 @@ export default function Settings() {
   const disableDevMode = useStore((s) => s.disableDevMode);
   const settings = useStore((s) => s.settings);
   const setSetting = useStore((s) => s.setSetting);
+  const auth = useStore((s) => s.auth);
+  const signInWithGoogle = useStore((s) => s.signInWithGoogle);
+  const signOut = useStore((s) => s.signOut);
   const [confirming, setConfirming] = useState(false);
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState(false);
@@ -104,6 +107,50 @@ export default function Settings() {
         <Row label="Streak" value={`${streak.current} day${streak.current === 1 ? "" : "s"}`} />
         <Row label="Freezes" value={streak.freezes} />
         <Row label="Total XP" value={stats.xpTotal} />
+      </Section>
+
+      <Section title="Account">
+        {!auth?.configured ? (
+          <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.4 }}>
+            Account sync isn't configured on this build yet. Once it's set up, you'll sign in here
+            and your progress will follow you to any device.
+          </div>
+        ) : auth.user ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Cloud size={18} color={C.ai} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {auth.user.email ?? "Signed in"}
+                </div>
+                <div style={{ fontSize: 12, color: auth.status === "error" ? C.shu : C.inkSoft, display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                  {auth.status === "synced" && <><CheckCircle2 size={12} color={C.matcha} /> Progress synced to your account</>}
+                  {auth.status === "syncing" && "Syncing…"}
+                  {auth.status === "error" && `Sync error: ${auth.error ?? "unknown"}`}
+                  {(auth.status === "idle" || !auth.status) && "Signed in"}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => signOut()}
+              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 12, borderRadius: 12, border: `1.5px solid ${C.line}`, background: C.surface, color: C.inkSoft, fontSize: 14, fontWeight: 700, fontFamily: F.body, cursor: "pointer" }}
+            >
+              <LogOut size={16} /> Sign out
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.4 }}>
+              Sign in to save your progress to your account and pick up on any device.
+            </div>
+            <button
+              onClick={() => signInWithGoogle()}
+              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 14, borderRadius: 12, border: `1.5px solid ${C.ai}`, background: C.aiSoft, color: C.aiDeep, fontSize: 15, fontWeight: 700, fontFamily: F.body, cursor: "pointer" }}
+            >
+              <LogIn size={18} /> Sign in with Google
+            </button>
+          </div>
+        )}
       </Section>
 
       <Section title="Sound">
