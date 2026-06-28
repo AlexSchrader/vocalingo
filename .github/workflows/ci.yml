@@ -18,6 +18,7 @@ jobs:
         with: { node-version: 20, cache: npm }
       - run: npm ci
       - run: npm run validate:content  # content schema hard-rule check
+      - run: npm run lint:curriculum   # authoring lint (macron readings, gojūon order, density, …)
       - run: npm run test:unit         # FSRS + migration logic (node:test)
       - run: npx playwright install --with-deps chromium
       - run: npm test                  # dev smoke

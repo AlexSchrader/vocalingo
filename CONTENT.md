@@ -152,3 +152,33 @@ Dormant (not yet wired):
   Fewer options make guessing trivial.
 - Multi-word vocab meanings (e.g. `"good morning"`) with an empty or absent `accept[]`
   will reject plausible typed paraphrases (e.g. `"morning"`). Add synonyms to `accept`.
+
+---
+
+## Curriculum lint (`npm run lint:curriculum`)
+
+A second, authoring-focused gate (`src/data/lint.js`, run by `scripts/lint-curriculum.mjs`)
+layered on top of `validateContent`. It automates the mechanical rules an author would otherwise
+check by hand, so authored units self-certify in CI. Brief: `BUILD-BRIEF-curriculum-lint.md`.
+The CLI runs **both** `validateContent` and `lintCurriculum`, so a green run means every
+mechanical rule passed.
+
+**The lint adds (beyond the contract above):**
+
+- **Per-type exact key sets** — a `kana` item may not carry `accept`; a `vocab` item must have
+  `accept` (may be empty); required keys per type must be present.
+- **Reading style** — lowercase romaji, charset `[a-z]` + macrons `ō ū ā ē ī`; long o/u must be a
+  macron (`kōhī`), not `ou`/`oo`/`uu`. Native `ei`/`ii` stay literal (`sensei`, `ōkii`).
+- **`を` / `ヲ` must read `"wo"`.**
+- **Gojūon order** — within a script (kana) unit, kana appear in dictionary order (rows in order;
+  dakuten g/z/d/b/p after the base set).
+- **Teach-front scope** — a kana/kanji *teach* front may only use glyphs already introduced (its
+  own single new glyph excepted). Vocab and example words are exempt (the reading carries them).
+- **Density** — ~5–8 word cards (vocab/kanji) per lesson (warning outside that band; **error at 0**).
+- **Kanji rules (forward-compatible, inert until a `kanji` type ships)** — stroke data required,
+  fronts globally unique, allowed only in `a1`+ stages.
+
+**What the lint does NOT check:** language *naturalness* — particle choice, register (です/ます),
+idiomatic collocation, whether a sentence is something a native would say. No test can read meaning;
+that is the **batched native-speaker review** gate, required before any "professional / certified /
+JLPT-aligned" claim or store launch.
